@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>edible print</title>
+  <meta name="description" content="Custom edible prints for cakes, biscuits and cake toppers." />
+  <style>
+    :root{
+      --navy:#061B52;
+      --pink:#E61EA8;
+      --blue:#1FA7F2;
+      --green:#52C93D;
+      --yellow:#F5C400;
+      --text:#3A3A3A;
+      --light:#F7F7F9;
+      --border:#E8E8EE;
+      --white:#FFFFFF;
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:Arial, Helvetica, sans-serif;
+      color:var(--text);
+      background:var(--white);
+      line-height:1.5;
+    }
+
+    img{max-width:100%;display:block}
+    a{text-decoration:none}
+
+    .container{
+      width:min(1120px, calc(100% - 32px));
+      margin:0 auto;
+    }
+
+    header{
+      position:sticky;
+      top:0;
+      z-index:20;
+      background:rgba(255,255,255,0.96);
+      border-bottom:1px solid var(--border);
+      backdrop-filter:blur(10px);
+    }
+
+    .header-inner{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:20px;
+      padding:18px 0;
+      flex-wrap:wrap;
+    }
+
+    .logo{
+      font-size:32px;
+      font-weight:700;
+      color:var(--navy);
+      white-space:nowrap;
+    }
+
+    .logo .print{
+      margin-left:12px;
+      background:linear-gradient(90deg,var(--pink),var(--blue),var(--green),var(--yellow));
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
+    }
+
+    nav{
+      display:flex;
+      gap:18px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    nav a{
+      color:var(--navy);
+      font-weight:600;
+      font-size:15px;
+    }
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:12px 18px;
+      border-radius:999px;
+      font-weight:700;
+      border:1px solid transparent;
+    }
+
+    .btn-primary{
+      background:var(--navy);
+      color:#fff;
+    }
+
+    .btn-secondary{
+      background:#fff;
+      color:var(--navy);
+      border-color:var(--navy);
+    }
+
+    section{padding:72px 0}
+
+    .hero{
+      padding:82px 0 64px;
+    }
+
+    .hero-grid{
+      display:grid;
+      grid-template-columns:1.08fr 0.92fr;
+      gap:42px;
+      align-items:center;
+    }
+
+    .eyebrow{
+      display:inline-block;
+      background:var(--light);
+      color:var(--navy);
+      padding:8px 12px;
+      border-radius:999px;
+      font-size:13px;
+      font-weight:700;
+      margin-bottom:16px;
+    }
+
+    h1,h2,h3,h4{
+      color:var(--navy);
+      margin:0 0 14px;
+      line-height:1.14;
+    }
+
+    h1{
+      font-size:clamp(38px, 6vw, 56px);
+      max-width:680px;
+    }
+
+    h2{
+      font-size:clamp(29px, 4vw, 38px);
+      text-align:center;
+    }
+
+    .section-intro{
+      max-width:760px;
+      margin:0 auto 36px;
+      text-align:center;
+      font-size:17px;
+    }
+
+    .hero p{
+      font-size:18px;
+      max-width:560px;
+      margin:0 0 22px;
+    }
+
+    .hero-actions{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom:14px;
+    }
+
+    .shipping-note{
+      color:#666;
+      font-size:14px;
+    }
+
+    .hero-box,
+    .product-image,
+    .upload-demo-box{
+      border:2px dashed #d6d9e6;
+      background:linear-gradient(135deg,#fff,#f4f6fb);
+      border-radius:24px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      color:var(--navy);
+      font-weight:700;
+      padding:24px;
+    }
+
+    .hero-box{
+      min-height:380px;
+    }
+
+    .alt{background:var(--light)}
+
+    .products-grid{
+      display:grid;
+      grid-template-columns:repeat(3, 1fr);
+      gap:22px;
+    }
+
+    .card{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:24px;
+      padding:22px;
+      box-shadow:0 4px 14px rgba(6,27,82,0.03);
+    }
+
+    .product-image{
+      height:210px;
+      margin-bottom:18px;
+      font-size:15px;
+    }
+
+    .product-sub{
+      margin-top:-4px;
+      margin-bottom:14px;
+      color:#5f6575;
+      font-size:15px;
+    }
+
+    .price-list{
+      background:var(--light);
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:14px;
+      margin:16px 0;
+    }
+
+    .price-row{
+      display:flex;
+      justify-content:space-between;
+      gap:16px;
+      padding:8px 0;
+      border-bottom:1px solid #e4e6ef;
+      font-size:15px;
+    }
+
+    .price-row:last-child{border-bottom:none}
+
+    .price-value{
+      font-weight:700;
+      color:var(--navy);
+      white-space:nowrap;
+    }
+
+    .microcopy{
+      font-size:14px;
+      color:#666;
+      margin-top:12px;
+    }
+
+    .steps,
+    .faq-grid,
+    .trust-grid{
+      display:grid;
+      gap:20px;
+    }
+
+    .steps{
+      grid-template-columns:repeat(3,1fr);
+    }
+
+    .step{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:24px;
+      padding:22px;
+      text-align:center;
+    }
+
+    .step-number{
+      width:42px;
+      height:42px;
+      border-radius:50%;
+      background:var(--navy);
+      color:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      margin:0 auto 12px;
+      font-weight:700;
+    }
+
+    .two-col{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:24px;
+      align-items:start;
+    }
+
+    .panel{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:24px;
+      padding:24px;
+    }
+
+    .panel ul{
+      margin:0;
+      padding-left:18px;
+    }
+
+    .panel li{margin-bottom:10px}
+
+    .toggle-demo{
+      display:grid;
+      gap:14px;
+      margin-top:14px;
+    }
+
+    .toggle-option{
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:16px;
+      background:#fff;
+    }
+
+    .toggle-option.active{
+      border-color:var(--navy);
+      box-shadow:0 0 0 2px rgba(6,27,82,0.06);
+    }
+
+    .toggle-title{
+      font-weight:700;
+      color:var(--navy);
+      margin-bottom:6px;
+    }
+
+    .upload-demo-box{
+      min-height:120px;
+      margin:16px 0 12px;
+      font-size:15px;
+    }
+
+    .field-note{
+      font-size:14px;
+      color:#666;
+    }
+
+    .trust-grid{
+      grid-template-columns:repeat(4,1fr);
+    }
+
+    .trust-item{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:20px;
+      padding:18px;
+      text-align:center;
+      font-weight:700;
+      color:var(--navy);
+    }
+
+    .faq-grid{
+      max-width:900px;
+      margin:0 auto;
+    }
+
+    .faq-item{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:20px;
+      padding:18px 20px;
+    }
+
+    .requirements-box{
+      max-width:850px;
+      margin:0 auto;
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:24px;
+      padding:24px;
+    }
+
+    footer{
+      border-top:1px solid var(--border);
+      padding:30px 0 40px;
+    }
+
+    .footer-grid{
+      display:grid;
+      grid-template-columns:1.2fr 1fr 1fr;
+      gap:20px;
+    }
+
+    .footer-links{
+      display:grid;
+      gap:10px;
+    }
+
+    .footer-links a,
+    footer p,
+    footer div{
+      color:var(--text);
+      margin:0;
+    }
+
+    @media (max-width: 980px){
+      .hero-grid,
+      .products-grid,
+      .steps,
+      .two-col,
+      .trust-grid,
+      .footer-grid{
+        grid-template-columns:1fr;
+      }
+
+      .header-inner{
+        align-items:flex-start;
+      }
+
+      .hero{
+        padding-top:48px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container header-inner">
+      <a href="#home" class="logo">edible <span class="print">print</span></a>
+      <nav>
+        <a href="#shop">Shop</a>
+        <a href="#how-it-works">How it works</a>
+        <a href="#upload">Upload info</a>
+        <a href="#faq">FAQ</a>
+        <a href="#contact">Contact</a>
+        <a href="#shop" class="btn btn-primary">Order now</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero" id="home">
+    <div class="container hero-grid">
+      <div>
+        <div class="eyebrow">Custom edible prints & cake toppers</div>
+        <h1>Custom edible prints for cakes, biscuits & branded treats</h1>
+        <p>Choose your product, pick whether you want the same image repeated or multiple different images, then upload your file and order.</p>
+        <div class="hero-actions">
+          <a href="#shop" class="btn btn-primary">Shop now</a>
+          <a href="#how-it-works" class="btn btn-secondary">How it works</a>
+        </div>
+        <div class="shipping-note">Dispatch 1–2 working days · £2.95 shipping · Free over £25</div>
+      </div>
+      <div class="hero-box">Add main hero image here<br><br>Example: cupcakes, biscuits or logo circles on a sheet</div>
+    </div>
+  </section>
+
+  <section class="alt" id="shop">
+    <div class="container">
+      <h2>Choose your product</h2>
+      <p class="section-intro">Keep the offer extremely clear. Each product has two price levels: one for the same design repeated, and one for multiple different designs on the same sheet.</p>
+
+      <div class="products-grid">
+        <article class="card">
+          <div class="product-image">15 x 5cm circles product image</div>
+          <h3>15 x 5cm Logo Circles (Pre-Cut)</h3>
+          <p class="product-sub">Perfect for cupcakes & biscuits</p>
+          <p>Custom edible icing sheet printed with your logo or image.</p>
+          <div class="price-list">
+            <div class="price-row"><span>Same design repeated</span><span class="price-value">£6.99</span></div>
+            <div class="price-row"><span>Multiple different designs</span><span class="price-value">£9.99</span></div>
+          </div>
+          <a href="#upload" class="btn btn-primary">Order this product</a>
+          <div class="microcopy">Food safe edible ink · High quality icing sheets</div>
+        </article>
+
+        <article class="card">
+          <div class="product-image">30 x 3.8cm circles product image</div>
+          <h3>30 x 3.8cm Logo Circles (Pre-Cut)</h3>
+          <p class="product-sub">Ideal for mini biscuits & small logos</p>
+          <p>Custom edible icing sheet printed with your logo or image.</p>
+          <div class="price-list">
+            <div class="price-row"><span>Same design repeated</span><span class="price-value">£7.49</span></div>
+            <div class="price-row"><span>Multiple different designs</span><span class="price-value">£10.99</span></div>
+          </div>
+          <a href="#upload" class="btn btn-primary">Order this product</a>
+          <div class="microcopy">Bright colours · Carefully packed</div>
+        </article>
+
+        <article class="card">
+          <div class="product-image">A4 edible sheet product image</div>
+          <h3>A4 Edible Print Sheet</h3>
+          <p class="product-sub">Full sheet for cutting yourself</p>
+          <p>Custom edible icing sheet printed with your logo or image.</p>
+          <div class="price-list">
+            <div class="price-row"><span>Same design repeated</span><span class="price-value">£6.49</span></div>
+            <div class="price-row"><span>Multiple different designs</span><span class="price-value">£9.49</span></div>
+          </div>
+          <a href="#upload" class="btn btn-primary">Order this product</a>
+          <div class="microcopy">Fast dispatch · We review every file before printing</div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="how-it-works">
+    <div class="container">
+      <h2>How it works</h2>
+      <p class="section-intro">Keep the journey simple from day one.</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <h3>Choose your product</h3>
+          <p>Select your size and whether you want the same image repeated or multiple different images.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <h3>Upload your image(s)</h3>
+          <p>PNG, JPG or PDF accepted. Upload one file for repeated designs or several files for multiple designs.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <h3>Place your order</h3>
+          <p>We review every file before printing, then dispatch within 1–2 working days.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="alt" id="upload">
+    <div class="container">
+      <h2>Upload flow</h2>
+      <p class="section-intro">Do not build a design tool. Just make the upload process clear and reassuring.</p>
+      <div class="two-col">
+        <div class="panel">
+          <h3>Choose print type</h3>
+          <div class="toggle-demo">
+            <div class="toggle-option active">
+              <div class="toggle-title">Same image repeated across the sheet</div>
+              <div>Upload 1 image. We repeat it across the whole sheet.</div>
+            </div>
+            <div class="toggle-option">
+              <div class="toggle-title">Multiple different images on one sheet</div>
+              <div>Upload multiple images. We arrange them neatly onto one sheet.</div>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Upload section</h3>
+          <div class="upload-demo-box">Upload file box goes here</div>
+          <div class="field-note">PNG / JPG / PDF accepted</div>
+          <div class="field-note">Best quality recommended</div>
+          <div class="field-note">We will arrange layout for best fit</div>
+          <div class="field-note" style="margin-top:12px;">Optional notes field example: “please make logo slightly larger” or “please keep order as uploaded”.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="how-to-use">
+    <div class="container">
+      <h2>How to use</h2>
+      <p class="section-intro">Keep the instructions short and practical.</p>
+      <div class="two-col">
+        <div class="panel">
+          <h3>Apply to</h3>
+          <ul>
+            <li>Icing</li>
+            <li>Fondant</li>
+            <li>Buttercream</li>
+            <li>Royal icing</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>Instructions</h3>
+          <ul>
+            <li>Peel backing sheet</li>
+            <li>Place onto icing</li>
+            <li>Smooth gently</li>
+            <li>Ready</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="alt">
+    <div class="container">
+      <h2>Why customers feel confident ordering</h2>
+      <p class="section-intro">The main friction is whether their file will work. Reduce that anxiety directly.</p>
+      <div class="trust-grid">
+        <div class="trust-item">We check every file before printing</div>
+        <div class="trust-item">Food safe edible ink</div>
+        <div class="trust-item">Bright colours</div>
+        <div class="trust-item">Fast dispatch</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="container">
+      <h2>Frequently asked questions</h2>
+      <div class="faq-grid">
+        <div class="faq-item">
+          <h3>What file type should I upload?</h3>
+          <p>PNG, JPG or PDF works best.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Can I upload photos?</h3>
+          <p>Yes.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Do you check the quality?</h3>
+          <p>Yes, we review all images before printing.</p>
+        </div>
+        <div class="faq-item">
+          <h3>How long does delivery take?</h3>
+          <p>Dispatch within 1–2 working days.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Can I upload multiple logos?</h3>
+          <p>Yes, choose the multiple image option.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Are the circles already cut?</h3>
+          <p>Yes for circle sheets.</p>
+        </div>
+        <div class="faq-item">
+          <h3>What icing do they work on?</h3>
+          <p>Fondant, icing, buttercream and royal icing.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="alt">
+    <div class="container">
+      <h2>For best results</h2>
+      <div class="requirements-box">
+        <p><strong>Recommended image guide:</strong></p>
+        <ul>
+          <li>Minimum 800px</li>
+          <li>Square logo preferred</li>
+          <li>Transparent PNG ideal</li>
+          <li>Avoid screenshots where possible</li>
+        </ul>
+        <p style="margin-top:16px;">But do not worry if you are unsure — we check every file before printing.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="container">
+      <div class="requirements-box">
+        <h2 style="text-align:left; margin-bottom:12px;">Contact</h2>
+        <p>Email: hello@edibleprint.uk</p>
+        <p>Dispatch: 1–2 working days</p>
+        <p>Shipping: £2.95 · Free over £25</p>
+        <p>Use this section later for your contact form, Etsy link or checkout link.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container footer-grid">
+      <div>
+        <div class="logo">edible <span class="print">print</span></div>
+        <p>Custom edible prints & cake toppers</p>
+      </div>
+      <div class="footer-links">
+        <a href="#shop">Shop</a>
+        <a href="#how-it-works">How it works</a>
+        <a href="#faq">FAQ</a>
+        <a href="#contact">Contact</a>
+      </div>
+      <div>
+        <div>£2.95 shipping</div>
+        <div>Free over £25</div>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
