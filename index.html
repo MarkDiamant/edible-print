@@ -46,13 +46,11 @@
     }
 
 .header-inner{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-end;
-  gap:20px;
+  display:grid;
+  grid-template-columns:auto 1fr;
+  align-items:center;
+  column-gap:24px;
   padding:0;
-  min-height:50px;
-  flex-wrap:nowrap;
 }
 
    .logo{
@@ -74,12 +72,13 @@
       color:transparent;
     }
 
-  nav{
+ nav{
   display:flex;
   gap:18px;
   align-items:center;
+  justify-self:end;
   flex-wrap:nowrap;
-  margin-bottom:8px;
+  margin:0;
 }
 
     nav a{
@@ -427,7 +426,7 @@
   <header>
     <div class="container header-inner">
       <a href="#home" class="logo">
-       <img src="logo.png" alt="edible print logo" style="height:190px; width:auto; display:block;">
+       <img src="logo.png" alt="edible print logo" style="height:95px; width:auto; display:block; margin:-18px 0 -18px 0;">
       </a>
       <nav>
         <a href="#shop">Shop</a>
