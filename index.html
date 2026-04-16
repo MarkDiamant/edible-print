@@ -50,7 +50,7 @@
       justify-content:space-between;
       align-items:center;
       gap:20px;
-      padding:10px 0;
+      padding:6px 0;
       flex-wrap:wrap;
     }
 
@@ -204,15 +204,22 @@
     }
 
     .product-image{
-      aspect-ratio: 1 / 1.414;
-      width:100%;
-      margin-bottom:18px;
-      font-size:15px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      overflow:hidden;
-    }
+  aspect-ratio: 1 / 1.414;
+  width:100%;
+  margin-bottom:18px;
+  font-size:15px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  padding:10px;
+  border:1px solid var(--border);
+  background:linear-gradient(135deg,#fff,#f4f6fb);
+  border-radius:12px;
+  text-align:center;
+  color:var(--navy);
+  font-weight:700;
+}
     }
 
     .product-sub{
@@ -381,12 +388,12 @@
       padding:22px 0 28px;
     }
 
-    .footer-grid{
-      display:grid;
-      grid-template-columns:1fr auto auto;
-      gap:24px;
-      align-items:center;
-    }
+   .footer-links{
+  display:flex;
+  gap:18px;
+  align-items:center;
+  flex-wrap:wrap;
+}
 
     .footer-links{
       display:grid;
@@ -424,7 +431,7 @@
   <header>
     <div class="container header-inner">
       <a href="#home" class="logo">
-        <img src="logo.png" alt="edible print logo" style="height:95px; width:auto; display:block;">
+       <img src="logo.png" alt="edible print logo" style="height:190px; width:auto; display:block;">
       </a>
       <nav>
         <a href="#shop">Shop</a>
@@ -678,11 +685,7 @@
         <a href="#faq">FAQ</a>
         <a href="#contact">Contact</a>
       </div>
-      <div>
-        <div>£2.95 shipping</div>
-        <div>Free over £25</div>
-      </div>
-    </div>
+         </div>
   </footer>
 </body>
 </html>
