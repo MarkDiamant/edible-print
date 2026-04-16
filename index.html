@@ -45,22 +45,26 @@
       backdrop-filter:blur(10px);
     }
 
- .header-inner{
+.header-inner{
   display:flex;
   justify-content:space-between;
-  align-items:center;
-  gap:12px;
+  align-items:flex-end;
+  gap:20px;
   padding:0;
-  min-height:72px;
+  min-height:50px;
   flex-wrap:nowrap;
 }
 
-    .logo{
-      font-size:32px;
-      font-weight:700;
-      color:var(--navy);
-      white-space:nowrap;
-    }
+   .logo{
+  font-size:32px;
+  font-weight:700;
+  color:var(--navy);
+  white-space:nowrap;
+  display:flex;
+  align-items:flex-end;
+  line-height:0;
+  flex-shrink:0;
+}
 
     .logo .print{
       margin-left:12px;
@@ -70,11 +74,12 @@
       color:transparent;
     }
 
-   nav{
+  nav{
   display:flex;
   gap:18px;
   align-items:center;
   flex-wrap:nowrap;
+  margin-bottom:8px;
 }
 
     nav a{
