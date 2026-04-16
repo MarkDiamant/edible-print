@@ -46,12 +46,11 @@
     }
 
 .header-inner{
-  display:grid;
-  grid-template-columns:auto 1fr;
+  display:flex;
+  justify-content:space-between;
   align-items:center;
-  column-gap:24px;
-  padding:0;
-  min-height:72px;
+  padding:6px 0;
+  gap:32px;
 }
 
    .logo{
@@ -75,12 +74,9 @@
 
  nav{
   display:flex;
-  gap:18px;
   align-items:center;
-  justify-self:end;
-  align-self:center;
-  flex-wrap:nowrap;
-  margin:0;
+  gap:26px;
+  white-space:nowrap;
 }
 
     nav a{
@@ -425,11 +421,13 @@
   </style>
 </head>
 <body>
-  <header>
+ <header>
   <div class="container header-inner">
-    <a href="#home" class="logo">
-      <img src="logo.png" alt="edible print logo" style="height:108px; width:auto; display:block; margin:-24px 0 -24px -8px;>
+
+    <a href="#home">
+      <img src="logo.png" alt="edible print logo" style="height:100px; width:auto; display:block;">
     </a>
+
     <nav>
       <a href="#shop">Shop</a>
       <a href="#how-it-works">How it works</a>
@@ -437,6 +435,7 @@
       <a href="#faq">FAQ</a>
       <a href="#contact">Contact</a>
     </nav>
+
   </div>
 </header>
 
