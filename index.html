@@ -376,15 +376,31 @@
     }
 
     .footer-grid{
-      display:grid;
-      grid-template-columns:1.2fr 1fr 1fr;
-      gap:20px;
-    }
+  display:grid;
+  grid-template-columns:1.5fr auto auto;
+  gap:28px;
+  align-items:start;
+}
 
     .footer-links{
-      display:grid;
-      gap:10px;
-    }
+  display:grid;
+  gap:10px;
+  justify-content:start;
+}
+
+.footer-brand img{
+  height:72px;
+  width:auto;
+  display:block;
+  margin-bottom:10px;
+}
+
+.footer-shipping{
+  display:grid;
+  gap:6px;
+  justify-content:start;
+  white-space:nowrap;
+}
 
     .footer-links a,
     footer p,
@@ -417,7 +433,7 @@
   <header>
     <div class="container header-inner">
       <a href="#home" class="logo">
-        <img src="logo.png" alt="edible print logo" style="height:260px; width:auto; display:block;">
+        <img src="logo.png" alt="edible print logo" style="height:80px; width:auto; display:block;">
       </a>
       <nav>
         <a href="#shop">Shop</a>
@@ -453,7 +469,9 @@
 
       <div class="products-grid">
         <article class="card">
-          <div class="product-image">15 x 5cm circles product image</div>
+          <div class="product-image">
+  <img src="product1.png" alt="15 x 5cm logo circles" style="max-height:100%; max-width:100%; object-fit:contain;">
+</div>
           <h3>15 x 5cm Logo Circles (Pre-Cut)</h3>
           <p class="product-sub">Perfect for cupcakes & biscuits</p>
           <p>Custom edible icing sheet printed with your logo or image.</p>
@@ -465,7 +483,9 @@
         </article>
 
         <article class="card">
-          <div class="product-image">30 x 3.8cm circles product image</div>
+          <div class="product-image">
+  <img src="product2.png" alt="30 x 3.8cm logo circles" style="max-height:100%; max-width:100%; object-fit:contain;">
+</div>
           <h3>30 x 3.8cm Logo Circles (Pre-Cut)</h3>
           <p class="product-sub">Ideal for mini biscuits & small logos</p>
           <p>Custom edible icing sheet printed with your logo or image.</p>
@@ -653,23 +673,25 @@
     </div>
   </section>
 
-  <footer>
-    <div class="container footer-grid">
-      <div>
-        <img src="logo.png" alt="edible print logo" style="height:100px; width:auto; display:block; margin-bottom:10px;">
-        <p>Custom edible prints & cake toppers</p>
-      </div>
-      <div class="footer-links">
-        <a href="#shop">Shop</a>
-        <a href="#how-it-works">How it works</a>
-        <a href="#faq">FAQ</a>
-        <a href="#contact">Contact</a>
-      </div>
-      <div>
-        <div>£2.95 shipping</div>
-        <div>Free over £25</div>
-      </div>
+<footer>
+  <div class="container footer-grid">
+    <div class="footer-brand">
+      <img src="logo.png" alt="edible print logo">
+      <p>Custom edible prints & cake toppers</p>
     </div>
-  </footer>
+
+    <div class="footer-links">
+      <a href="#shop">Shop</a>
+      <a href="#how-it-works">How it works</a>
+      <a href="#faq">FAQ</a>
+      <a href="#contact">Contact</a>
+    </div>
+
+    <div class="footer-shipping">
+      <div>£2.95 shipping</div>
+      <div>Free over £25</div>
+    </div>
+  </div>
+</footer>
 </body>
 </html>
