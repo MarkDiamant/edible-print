@@ -100,13 +100,19 @@
       color:#fff;
     }
 
+    .card .btn-primary{
+  display:block;
+  width:fit-content;
+  margin:14px auto 0 auto;
+}
+    
     .btn-secondary{
       background:#fff;
       color:var(--navy);
       border-color:var(--navy);
     }
 
-    section{padding:48px 0}
+    section{padding:36px 0}
 
     .hero{
       padding:82px 0 64px;
@@ -142,9 +148,10 @@
     }
 
     h2{
-      font-size:clamp(29px, 4vw, 38px);
-      text-align:center;
-    }
+  font-size:clamp(26px, 3.6vw, 34px);
+  text-align:center;
+  margin-bottom:10px;
+}
 
     .section-intro{
       max-width:760px;
@@ -193,10 +200,11 @@
     .alt{background:var(--light)}
 
     .products-grid{
-      display:grid;
-      grid-template-columns:repeat(3, 1fr);
-      gap:18px;
-    }
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 360px));
+  justify-content:center;
+  gap:18px;
+}
 
    .card{
   background:#fff;
@@ -208,8 +216,8 @@
 
 .product-image{
   aspect-ratio: 1 / 1.414;
-  width:82%;
-  margin:0 auto 14px;
+  width:100%;
+  margin:0 0 14px;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -217,10 +225,7 @@
   padding:0;
   border:none;
   background:none;
-  border-radius:0;
-  text-align:center;
-  color:var(--navy);
-  font-weight:700;
+  border-radius:12px;
 }
     }
 
@@ -365,16 +370,17 @@
     }
 
     .faq-grid{
-      max-width:900px;
-      margin:0 auto;
-    }
+  max-width:820px;
+  margin:0 auto;
+  gap:12px;
+}
 
     .faq-item{
-      background:#fff;
-      border:1px solid var(--border);
-      border-radius:20px;
-      padding:18px 20px;
-    }
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:12px 14px;
+}
 
     .requirements-box{
       max-width:850px;
@@ -460,10 +466,10 @@
           <a href="#shop" class="btn btn-primary">Shop now</a>
           <a href="#how-it-works" class="btn btn-secondary">How it works</a>
         </div>
-        <div class="shipping-note">Dispatch 1–2 working days · £2.95 shipping · Free over £25</div>
+        <div class="shipping-note">Dispatch same or next working day · Collection and shipping available</div>
       </div>
-      <div class="hero-box">
-  <img src="Hero.png" alt="Edible print hero image" style="width:100%; height:100%; object-fit:cover; display:block; border-radius:24px;">
+      <div class="hero-box" style="padding:0; overflow:hidden;">
+  <img src="Hero.png" alt="Edible print hero image" style="width:100%; height:100%; object-fit:cover; display:block;">
 </div>
 
       
@@ -473,11 +479,10 @@
   <section class="alt" id="shop">
     <div class="container">
       <h2>Choose your product</h2>
-      <p class="section-intro">Keep the offer extremely clear. Each product has two price levels: one for the same design repeated, and one for multiple different designs on the same sheet.</p>
 
       <div class="products-grid">
         <article class="card">
-          <div class="product-image"><img src="product1.png" alt="15 x 5cm logo circles" style="width:100%; height:100%; object-fit:contain; display:block; image-rendering:auto;"></div>
+          <div class="product-image"><img src="product1.png" alt="15 x 5cm logo circles" style="width:100%; height:100%; object-fit:cover; display:block;"></div>
           <h3>15 x 5cm Logo Circles (Pre-Cut)</h3>
           <p class="product-sub">Perfect for cupcakes & biscuits</p>
           <p>Custom edible icing sheet printed with your logo or image.</p>
@@ -490,7 +495,7 @@
         </article>
 
         <article class="card">
-          <div class="product-image"><img src="product2.png" alt="30 x 3.8cm logo circles" style="width:100%; height:100%; object-fit:contain; display:block; image-rendering:auto;"></div>
+          <div class="product-image"><img src="product2.png" alt="30 x 3.8cm logo circles" style="width:100%; height:100%; object-fit:cover; display:block;"></div>
           <h3>30 x 3.8cm Logo Circles (Pre-Cut)</h3>
           <p class="product-sub">Ideal for mini biscuits & small logos</p>
           <p>Custom edible icing sheet printed with your logo or image.</p>
@@ -526,7 +531,6 @@
   <section id="how-it-works">
     <div class="container">
       <h2>How it works</h2>
-      <p class="section-intro">Keep the journey simple from day one.</p>
       <div class="steps">
         <div class="step">
           <div class="step-number">1</div>
@@ -550,7 +554,6 @@
   <section class="alt" id="upload">
     <div class="container">
       <h2>Upload flow</h2>
-      <p class="section-intro">Do not build a design tool. Just make the upload process clear and reassuring.</p>
       <div class="two-col">
         <div class="panel">
           <h3>Choose print type</h3>
@@ -580,7 +583,6 @@
   <section id="how-to-use">
     <div class="container">
       <h2>How to use</h2>
-      <p class="section-intro">Keep the instructions short and practical.</p>
       <div class="two-col">
         <div class="panel">
           <h3>Apply to</h3>
@@ -607,7 +609,6 @@
   <section class="alt">
     <div class="container">
       <h2>Why customers feel confident ordering</h2>
-      <p class="section-intro">The main friction is whether their file will work. Reduce that anxiety directly.</p>
       <div class="trust-grid">
         <div class="trust-item">We check every file before printing</div>
         <div class="trust-item">Food safe edible ink</div>
@@ -676,7 +677,6 @@
         <p>Email: hello@edibleprint.uk</p>
         <p>Dispatch: 1–2 working days</p>
         <p>Shipping: £2.95 · Free over £25</p>
-        <p>Use this section later for your contact form, Etsy link or checkout link.</p>
       </div>
     </div>
   </section>
@@ -685,7 +685,6 @@
     <div class="container footer-grid">
       <div>
         <img src="logo.png" alt="edible print logo" style="height:52px; width:auto; display:block;">
-        <p>Custom edible prints & cake toppers</p>
       </div>
       <div class="footer-links">
         <a href="#shop">Shop</a>
