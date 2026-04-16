@@ -50,7 +50,7 @@
       justify-content:space-between;
       align-items:center;
       gap:20px;
-      padding:22px 0;
+      padding:18px 0;
       flex-wrap:wrap;
     }
 
@@ -204,9 +204,15 @@
     }
 
     .product-image{
-      height:210px;
+      aspect-ratio: 1 / 1.414;
+      width:100%;
       margin-bottom:18px;
       font-size:15px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+    }
     }
 
     .product-sub{
@@ -372,35 +378,20 @@
 
     footer{
       border-top:1px solid var(--border);
-      padding:30px 0 40px;
+      padding:22px 0 28px;
     }
 
     .footer-grid{
-  display:grid;
-  grid-template-columns:1.5fr auto auto;
-  gap:28px;
-  align-items:start;
-}
+      display:grid;
+      grid-template-columns:1fr auto auto;
+      gap:24px;
+      align-items:center;
+    }
 
     .footer-links{
-  display:grid;
-  gap:10px;
-  justify-content:start;
-}
-
-.footer-brand img{
-  height:72px;
-  width:auto;
-  display:block;
-  margin-bottom:10px;
-}
-
-.footer-shipping{
-  display:grid;
-  gap:6px;
-  justify-content:start;
-  white-space:nowrap;
-}
+      display:grid;
+      gap:10px;
+    }
 
     .footer-links a,
     footer p,
@@ -433,7 +424,7 @@
   <header>
     <div class="container header-inner">
       <a href="#home" class="logo">
-        <img src="logo.png" alt="edible print logo" style="height:80px; width:auto; display:block;">
+        <img src="logo.png" alt="edible print logo" style="height:115px; width:auto; display:block;">
       </a>
       <nav>
         <a href="#shop">Shop</a>
@@ -459,6 +450,8 @@
         <div class="shipping-note">Dispatch 1–2 working days · £2.95 shipping · Free over £25</div>
       </div>
       <div class="hero-box">Add main hero image here<br><br>Example: cupcakes, biscuits or logo circles on a sheet</div>
+
+      
     </div>
   </section>
 
@@ -469,9 +462,7 @@
 
       <div class="products-grid">
         <article class="card">
-          <div class="product-image">
-  <img src="product1.png" alt="15 x 5cm logo circles" style="max-height:100%; max-width:100%; object-fit:contain;">
-</div>
+          <div class="product-image"><img src="product1.png" alt="15 x 5cm logo circles" style="width:100%; height:100%; object-fit:contain;"></div>
           <h3>15 x 5cm Logo Circles (Pre-Cut)</h3>
           <p class="product-sub">Perfect for cupcakes & biscuits</p>
           <p>Custom edible icing sheet printed with your logo or image.</p>
@@ -480,12 +471,11 @@
             <div class="price-row"><span>Multiple different designs</span><span class="price-value">£9.99</span></div>
           </div>
           <a href="#upload" class="btn btn-primary">Order this product</a>
+          
         </article>
 
         <article class="card">
-          <div class="product-image">
-  <img src="product2.png" alt="30 x 3.8cm logo circles" style="max-height:100%; max-width:100%; object-fit:contain;">
-</div>
+          <div class="product-image"><img src="product2.png" alt="30 x 3.8cm logo circles" style="width:100%; height:100%; object-fit:contain;"></div>
           <h3>30 x 3.8cm Logo Circles (Pre-Cut)</h3>
           <p class="product-sub">Ideal for mini biscuits & small logos</p>
           <p>Custom edible icing sheet printed with your logo or image.</p>
@@ -494,6 +484,7 @@
             <div class="price-row"><span>Multiple different designs</span><span class="price-value">£10.99</span></div>
           </div>
           <a href="#upload" class="btn btn-primary">Order this product</a>
+          
         </article>
 
         <article class="card">
@@ -506,12 +497,14 @@
             <div class="price-row"><span>Multiple different designs</span><span class="price-value">£9.49</span></div>
           </div>
           <a href="#upload" class="btn btn-primary">Order this product</a>
+          
         </article>
       </div>
 
-      <p class="section-intro" style="margin-top:24px; margin-bottom:0;">
+      <p class="section-intro" style="margin-top:24px;">
         Food safe edible ink · High quality icing sheets · Fast dispatch · We review every file before printing
       </p>
+
     </div>
   </section>
 
@@ -673,25 +666,23 @@
     </div>
   </section>
 
-<footer>
-  <div class="container footer-grid">
-    <div class="footer-brand">
-      <img src="logo.png" alt="edible print logo">
-      <p>Custom edible prints & cake toppers</p>
+  <footer>
+    <div class="container footer-grid">
+      <div>
+        <img src="logo.png" alt="edible print logo" style="height:100px;width:auto;display:block;margin-bottom:10px;">
+        <p>Custom edible prints & cake toppers</p>
+      </div>
+      <div class="footer-links">
+        <a href="#shop">Shop</a>
+        <a href="#how-it-works">How it works</a>
+        <a href="#faq">FAQ</a>
+        <a href="#contact">Contact</a>
+      </div>
+      <div>
+        <div>£2.95 shipping</div>
+        <div>Free over £25</div>
+      </div>
     </div>
-
-    <div class="footer-links">
-      <a href="#shop">Shop</a>
-      <a href="#how-it-works">How it works</a>
-      <a href="#faq">FAQ</a>
-      <a href="#contact">Contact</a>
-    </div>
-
-    <div class="footer-shipping">
-      <div>£2.95 shipping</div>
-      <div>Free over £25</div>
-    </div>
-  </div>
-</footer>
+  </footer>
 </body>
 </html>
