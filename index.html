@@ -106,7 +106,7 @@
       border-color:var(--navy);
     }
 
-    section{padding:72px 0}
+    section{padding:48px 0}
 
     .hero{
       padding:82px 0 64px;
@@ -148,7 +148,7 @@
 
     .section-intro{
       max-width:760px;
-      margin:0 auto 36px;
+      margin:0 auto 20px;
       text-align:center;
       font-size:17px;
     }
@@ -195,23 +195,32 @@
     .products-grid{
       display:grid;
       grid-template-columns:repeat(3, 1fr);
-      gap:22px;
+      gap:18px;
     }
 
    .card{
   background:#fff;
   border:1px solid var(--border);
   border-radius:24px;
-  padding:18px;
+  padding:16px;
   box-shadow:0 4px 14px rgba(6,27,82,0.03);
 }
 
- .product-image{
+.product-image{
   aspect-ratio: 1 / 1.414;
-  width:68%;
-  margin:0 auto 16px;
+  width:82%;
+  margin:0 auto 14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   overflow:hidden;
-  border-radius:10px;
+  padding:0;
+  border:none;
+  background:none;
+  border-radius:0;
+  text-align:center;
+  color:var(--navy);
+  font-weight:700;
 }
     }
 
@@ -378,7 +387,7 @@
 
     footer{
       border-top:1px solid var(--border);
-      padding:22px 0 28px;
+      padding:10px 0 14px;
     }
 
    .footer-links{
@@ -389,9 +398,11 @@
 }
 
     .footer-links{
-      display:grid;
-      gap:10px;
-    }
+  display:flex;
+  gap:14px;
+  align-items:center;
+  flex-wrap:wrap;
+}
 
     .footer-links a,
     footer p,
@@ -425,7 +436,7 @@
   <div class="container header-inner">
 
     <a href="#home">
-      <img src="logo.png" alt="edible print logo" style="height:100px; width:auto; display:block;">
+      <img src="logo.png" alt="edible print logo" style="height:66px; width:auto; display:block;">
     </a>
 
     <nav>
@@ -451,7 +462,9 @@
         </div>
         <div class="shipping-note">Dispatch 1–2 working days · £2.95 shipping · Free over £25</div>
       </div>
-      <div class="hero-box">Add main hero image here<br><br>Example: cupcakes, biscuits or logo circles on a sheet</div>
+      <div class="hero-box">
+  <img src="Hero.png" alt="Edible print hero image" style="width:100%; height:100%; object-fit:cover; display:block; border-radius:24px;">
+</div>
 
       
     </div>
@@ -464,7 +477,7 @@
 
       <div class="products-grid">
         <article class="card">
-          <div class="product-image"><img src="product1.png" alt="15 x 5cm logo circles" style="width:100%; height:100%; object-fit:cover; display:block;">"></div>
+          <div class="product-image"><img src="product1.png" alt="15 x 5cm logo circles" style="width:100%; height:100%; object-fit:contain; display:block; image-rendering:auto;"></div>
           <h3>15 x 5cm Logo Circles (Pre-Cut)</h3>
           <p class="product-sub">Perfect for cupcakes & biscuits</p>
           <p>Custom edible icing sheet printed with your logo or image.</p>
@@ -477,7 +490,7 @@
         </article>
 
         <article class="card">
-          <div class="product-image"><img src="product2.png" alt="30 x 3.8cm logo circles" style="width:100%; height:100%; object-fit:cover; display:block;">"></div>
+          <div class="product-image"><img src="product2.png" alt="30 x 3.8cm logo circles" style="width:100%; height:100%; object-fit:contain; display:block; image-rendering:auto;"></div>
           <h3>30 x 3.8cm Logo Circles (Pre-Cut)</h3>
           <p class="product-sub">Ideal for mini biscuits & small logos</p>
           <p>Custom edible icing sheet printed with your logo or image.</p>
@@ -671,7 +684,7 @@
   <footer>
     <div class="container footer-grid">
       <div>
-        <img src="logo.png" alt="edible print logo" style="height:100px;width:auto;display:block;margin-bottom:10px;">
+        <img src="logo.png" alt="edible print logo" style="height:52px; width:auto; display:block;">
         <p>Custom edible prints & cake toppers</p>
       </div>
       <div class="footer-links">
