@@ -1,0 +1,2 @@
+import Link from 'next/link';import {products,money} from '../../../lib/products';import {SiteHeader,SiteFooter} from '../../../components/SiteChrome';
+export default function Collection(){return <><SiteHeader/><main className="collection"><h1 className="collection-title">Shop</h1><div className="product-grid">{products.map(p=><article className="product-card" key={p.slug}><Link href={'/product/'+p.slug}><img src={p.image} alt={p.title}/><h3>{p.title}</h3><p>{money(p.variants[0][1])}</p></Link></article>)}</div></main><SiteFooter/></>}
