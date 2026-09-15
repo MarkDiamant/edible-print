@@ -16,3 +16,6 @@
 .sheet-count{white-space:nowrap}
 
 .customer-error{display:flex;gap:10px;align-items:center;padding:12px 14px;margin:8px 0 12px;border:1px solid #d7a3a3;background:#fff6f6;border-radius:9px}.customer-error strong{font-weight:700}.customer-error span{font-size:15px}
+
+/* Consistent product gallery sizing */
+.producthero-frame{width:100%;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fff}.producthero-frame .producthero{width:100%;height:100%;max-height:none;object-fit:contain;display:block}.product-media{min-width:0}.product-media .tutorial-under-gallery{width:100%;margin-top:22px}.product-media .tutorial-under-gallery video{width:100%;max-width:100%}
