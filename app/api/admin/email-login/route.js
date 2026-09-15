@@ -1,6 +1,6 @@
 import {NextResponse} from 'next/server';
-import {adminToken} from '../../../../../lib/adminAuth';
-import {verifyAdminMagicToken} from '../../../../../lib/adminMagicLink';
+import {adminToken} from '../../../../lib/adminAuth';
+import {verifyAdminMagicToken} from '../../../../lib/adminMagicLink';
 
 export async function GET(req){
   const token=req.nextUrl.searchParams.get('token');
