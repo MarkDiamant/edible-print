@@ -9,7 +9,7 @@ export default async function Admin({searchParams}){
   const jar=await cookies();
   if(!isAdminValue(jar.get('edible_admin')?.value)){
     const params=await searchParams;
-    return <AdminLogin passwordError={Boolean(params?.error)}/>;
+    return <AdminLogin passwordError={Boolean(params?.error)} linkInvalid={params?.link==='invalid'}/>;
   }
   let orders=[];
   let configError='';
