@@ -18,6 +18,10 @@ export async function POST(req,{params}){
   if(!order)return NextResponse.redirect(new URL(`/admin/orders/${id}?rm=missing`,req.url),303);
   if(order.shipping_method==='collection')return NextResponse.redirect(new URL(`/admin/orders/${id}?rm=collection`,req.url),303);
 
+  const form=await req.formData().catch(()=>null);
+  const requested=clean(form?.get('postage_service')).toLowerCase();
+  const postageChoice=['standard','express'].includes(requested)?requested:(order.shipping_method==='express'?'express':'standard');
+
   const {data:existing}=await db.from('order_events').select('details').eq('order_id',id).eq('event_type','royal_mail_order_created').order('created_at',{ascending:false}).limit(1);
   if(existing?.length)return NextResponse.redirect(new URL(`/admin/orders/${id}?rm=exists`,req.url),303);
 
@@ -30,7 +34,7 @@ export async function POST(req,{params}){
   const sheetCount=Math.max(1,(items||[]).reduce((n,x)=>n+(Number(x.quantity)||0),0));
   const weightInGrams=83+Math.max(0,sheetCount-1)*30;
   if(weightInGrams>750){
-    await db.from('order_events').insert({order_id:id,event_type:'royal_mail_order_failed',actor:'admin',details:{message:'Calculated Large Letter weight exceeds 750g',sheet_count:sheetCount,weight_grams:weightInGrams}});
+    await db.from('order_events').insert({order_id:id,event_type:'royal_mail_order_failed',actor:'admin',details:{message:'Calculated Large Letter weight exceeds 750g',sheet_count:sheetCount,weight_grams:weightInGrams,postage_choice:postageChoice}});
     return NextResponse.redirect(new URL(`/admin/orders/${id}?rm=weight`,req.url),303);
   }
 
@@ -71,14 +75,14 @@ export async function POST(req,{params}){
     if(!response.ok||!created||result?.errorsCount>0){
       const message=result?.failedOrders?.[0]?.errors?.[0]?.message||result?.message||`Royal Mail returned ${response.status}`;
       console.error('Click & Drop order export failed',response.status,message);
-      await db.from('order_events').insert({order_id:id,event_type:'royal_mail_order_failed',actor:'admin',details:{message:String(message).slice(0,500),sheet_count:sheetCount,weight_grams:weightInGrams,shipping_method:order.shipping_method}});
+      await db.from('order_events').insert({order_id:id,event_type:'royal_mail_order_failed',actor:'admin',details:{message:String(message).slice(0,500),sheet_count:sheetCount,weight_grams:weightInGrams,shipping_method:order.shipping_method,postage_choice:postageChoice}});
       return NextResponse.redirect(new URL(`/admin/orders/${id}?rm=failed`,req.url),303);
     }
-    await db.from('order_events').insert({order_id:id,event_type:'royal_mail_order_created',actor:'admin',details:{order_identifier:created.orderIdentifier||null,order_reference:created.orderReference||orderRef,tracking_number:created.trackingNumber||null,sheet_count:sheetCount,weight_grams:weightInGrams,shipping_method:order.shipping_method}});
+    await db.from('order_events').insert({order_id:id,event_type:'royal_mail_order_created',actor:'admin',details:{order_identifier:created.orderIdentifier||null,order_reference:created.orderReference||orderRef,tracking_number:created.trackingNumber||null,sheet_count:sheetCount,weight_grams:weightInGrams,shipping_method:order.shipping_method,postage_choice:postageChoice}});
     return NextResponse.redirect(new URL(`/admin/orders/${id}?rm=created`,req.url),303);
   }catch(error){
     console.error('Click & Drop order export error',error);
-    await db.from('order_events').insert({order_id:id,event_type:'royal_mail_order_failed',actor:'admin',details:{message:String(error?.message||error).slice(0,500),sheet_count:sheetCount,weight_grams:weightInGrams,shipping_method:order.shipping_method}});
+    await db.from('order_events').insert({order_id:id,event_type:'royal_mail_order_failed',actor:'admin',details:{message:String(error?.message||error).slice(0,500),sheet_count:sheetCount,weight_grams:weightInGrams,shipping_method:order.shipping_method,postage_choice:postageChoice}});
     return NextResponse.redirect(new URL(`/admin/orders/${id}?rm=failed`,req.url),303);
   }
 }
