@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import {NextResponse} from 'next/server';
 import {getSupabaseAdmin} from '../../../../lib/supabaseAdmin';
+import {sendOrderEmail} from '../../../../lib/transactionalEmail';
 
 export const runtime='nodejs';
 
@@ -68,7 +69,10 @@ export async function POST(req){
     const event=stripe.webhooks.constructEvent(raw,signature,process.env.STRIPE_WEBHOOK_SECRET);
     if(event.type==='checkout.session.completed'||event.type==='checkout.session.async_payment_succeeded'){
       const session=event.data.object;
-      if(session.payment_status==='paid'||event.type==='checkout.session.async_payment_succeeded')await persistPaidOrder(session);
+      if(session.payment_status==='paid'||event.type==='checkout.session.async_payment_succeeded'){
+        const orderId=await persistPaidOrder(session);
+        await sendOrderEmail(orderId,'confirmation');
+      }
     }
     return NextResponse.json({received:true});
   }catch(e){
