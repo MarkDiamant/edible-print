@@ -5,7 +5,7 @@ import {getSupabaseAdmin} from '../../../../lib/supabaseAdmin';
 import {formatOrderNumber} from '../../../../lib/orderNumber';
 
 export const dynamic='force-dynamic';
-const CLICK_DROP_ORDERS='https://api.parcel.royalmail.com/api/v1/Orders';
+const CLICK_DROP_ORDERS='https://api.parcel.royalmail.com/api/v1/orders';
 
 function parseArtworkInstructions(text=''){
   const chunks=String(text).split(/\n\n(?=IMAGE \d+: )/i);
@@ -29,8 +29,8 @@ function eventLabel(event){
   if(t==='email_feedback')return d.scheduled_at?'Feedback email was scheduled for the customer.':'Feedback email was sent to the customer.';
   if(t==='email_failed')return `Customer email failed${d.type?` (${d.type})`:''}.`;
   if(t==='royal_mail_order_created')return `Royal Mail order created${d.order_reference?` (${d.order_reference})`:''}.`;
-  if(t==='royal_mail_order_deleted')return 'Royal Mail order was deleted in Click & Drop.';
-  if(t==='royal_mail_order_failed')return 'Royal Mail order creation failed.';
+  if(t==='royal_mail_order_deleted')return 'Royal Mail order was deleted / cancelled in Click & Drop.';
+  if(t==='royal_mail_order_failed')return d.action==='delete'?'Royal Mail cancellation failed.':'Royal Mail order creation failed.';
   if(t==='refund_issued')return `Full refund issued${d.amount?` — £${(Number(d.amount)/100).toFixed(2)}`:''}.`;
   if(t==='refund_failed')return 'Refund attempt failed.';
   if(t==='return_recorded')return 'Order was marked as returned.';
@@ -44,9 +44,10 @@ function eventTime(value){
 
 async function remoteOrderExists(details={}){
   const apiKey=process.env.ROYAL_MAIL_CLICK_DROP_API_KEY;
-  const identifier=details.order_identifier||details.order_reference;
-  if(!apiKey||!identifier)return true;
-  const token=details.order_identifier?String(identifier):`"${encodeURIComponent(String(identifier))}"`;
+  const reference=String(details.order_reference||'').trim();
+  const identifier=String(details.order_identifier||'').trim();
+  if(!apiKey||(!reference&&!identifier))return true;
+  const token=reference?`%22${encodeURIComponent(reference)}%22`:identifier;
   try{
     const response=await fetch(`${CLICK_DROP_ORDERS}/${token}`,{headers:{Authorization:apiKey},cache:'no-store'});
     if(response.status===404)return false;
@@ -54,7 +55,7 @@ async function remoteOrderExists(details={}){
     const result=await response.json().catch(()=>null);
     if(Array.isArray(result))return result.length>0;
     if(Array.isArray(result?.orders))return result.orders.length>0;
-    return true;
+    return Boolean(result);
   }catch{return true}
 }
 
@@ -100,7 +101,7 @@ export default async function OrderDetail({params,searchParams}){
   const postageName=defaultPostage==='express'?'Tracked 24 Large Letter':'Tracked 48 Large Letter';
   const number=formatOrderNumber(order.order_number);
   const timeline=[...(syncedDeletedEvent?[syncedDeletedEvent]:[]),...(events||[])].map(e=>({...e,label:eventLabel(e)})).filter(e=>e.label);
-  const rmNotice=query?.rm==='created'?'Royal Mail order created successfully.':query?.rm==='exists'?'This order already exists in Click & Drop.':query?.rm==='failed'?'Royal Mail could not accept the order. Check the latest error below and try again.':query?.rm==='config'?'Click & Drop API key is not configured.':query?.rm==='weight'?'This order is over the 750g Large Letter limit and needs manual postage setup.':'';
+  const rmNotice=query?.rm==='created'?'Royal Mail order created successfully.':query?.rm==='exists'?'This order already exists in Click & Drop.':query?.rm==='deleted'?'Royal Mail order cancelled/deleted successfully.':query?.rm==='delete-failed'?'Royal Mail would not allow this order to be cancelled. If the label has already been paid for/generated, use Royal Mail’s refund process.':query?.rm==='failed'?'Royal Mail could not accept the order. Check the latest error below and try again.':query?.rm==='config'?'Click & Drop API key is not configured.':query?.rm==='weight'?'This order is over the 750g Large Letter limit and needs manual postage setup.':'';
   const notice=query?.refund==='done'?'Refund completed successfully.':query?.refund==='failed'?'Refund failed — check the timeline/error logs.':query?.refund==='exists'?'This order has already been refunded.':query?.return==='done'?'Return recorded successfully.':query?.return==='exists'?'This order is already marked returned.':'';
   return <main className="admin-shell" style={{maxWidth:1220,margin:'0 auto',padding:'24px 20px 50px'}}>
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:16,flexWrap:'wrap',marginBottom:18}}>
@@ -127,7 +128,7 @@ export default async function OrderDetail({params,searchParams}){
         </section>
         {!isCollection&&<section style={card}>
           <h2 style={{margin:'0 0 6px',fontSize:19}}>Postage</h2><p style={{margin:'0 0 14px',color:'#60656b'}}>Customer selected <strong>{order.shipping_method==='express'?'Express':'Standard'}</strong> → <strong>{postageName}</strong>. Large Letter · {sheetCount} {sheetCount===1?'sheet':'sheets'} · estimated {mailWeight}g.</p>
-          {royalMail?<><div style={{background:'#eef8ef',border:'1px solid #cfe5d2',borderRadius:10,padding:14,marginBottom:12}}><strong>Royal Mail order created</strong><p style={{margin:'6px 0 0'}}>Reference: {royalMail.details?.order_reference||`EP-${number}`}{royalMail.details?.order_identifier?` · Royal Mail order ${royalMail.details.order_identifier}`:''}{royalMail.details?.tracking_number?` · ${royalMail.details.tracking_number}`:''}</p><p style={{margin:'5px 0 0'}}>Service: <strong>{postageName}</strong></p></div><a className="btn" href="https://business.parcel.royalmail.com/orders" target="_blank" rel="noopener noreferrer">Pay / print label in Click & Drop</a></>:<form action={`/api/admin/orders/${id}/royal-mail`} method="post" style={{display:'grid',gap:10,maxWidth:430}}><input type="hidden" name="postage_service" value={defaultPostage}/><div style={{background:'#f7f8f6',border:'1px solid #e2e5df',borderRadius:10,padding:'11px 13px'}}><strong>{postageName}</strong><div style={{fontSize:13,color:'#687068',marginTop:3}}>Automatically selected from the customer's checkout choice.</div></div><button className="btn" type="submit" style={{justifySelf:'start'}}>Create Royal Mail order</button></form>}
+          {royalMail?<><div style={{background:'#eef8ef',border:'1px solid #cfe5d2',borderRadius:10,padding:14,marginBottom:12}}><strong>Royal Mail order created</strong><p style={{margin:'6px 0 0'}}>Reference: {royalMail.details?.order_reference||`EP-${number}`}{royalMail.details?.order_identifier?` · Royal Mail order ${royalMail.details.order_identifier}`:''}{royalMail.details?.tracking_number?` · ${royalMail.details.tracking_number}`:''}</p><p style={{margin:'5px 0 0'}}>Service: <strong>{postageName}</strong></p></div><div style={{display:'flex',gap:8,flexWrap:'wrap'}}><a className="btn" href="https://business.parcel.royalmail.com/orders" target="_blank" rel="noopener noreferrer">Pay / print label in Click & Drop</a><form action={`/api/admin/orders/${id}/cancel-royal-mail`} method="post"><button className="btn" type="submit" style={{borderColor:'#d6a4a4',color:'#8a2d2d'}}>Cancel Royal Mail order</button></form></div><p style={{fontSize:12,color:'#777',margin:'9px 0 0'}}>Cancelling invalidates any Royal Mail label. If postage has already been paid/generated, Royal Mail may require its refund process instead.</p></>:<form action={`/api/admin/orders/${id}/royal-mail`} method="post" style={{display:'grid',gap:10,maxWidth:430}}><input type="hidden" name="postage_service" value={defaultPostage}/><div style={{background:'#f7f8f6',border:'1px solid #e2e5df',borderRadius:10,padding:'11px 13px'}}><strong>{postageName}</strong><div style={{fontSize:13,color:'#687068',marginTop:3}}>Automatically selected from the customer's checkout choice.</div></div><button className="btn" type="submit" style={{justifySelf:'start'}}>Create Royal Mail order</button></form>}
           {rmNotice&&<p style={{margin:'12px 0 0',fontWeight:600}}>{rmNotice}</p>}
           {query?.rm==='failed'&&rmEvents?.[0]?.event_type==='royal_mail_order_failed'&&<p style={{margin:'6px 0 0',color:'#8a2d2d'}}>{rmEvents[0].details?.message||'Royal Mail returned an error.'}</p>}
         </section>}
