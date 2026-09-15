@@ -1,5 +1,5 @@
 import {NextResponse} from 'next/server';
-import {createAdminMagicToken,isAllowedAdminEmail} from '../../../../../lib/adminMagicLink';
+import {createAdminMagicToken,isAllowedAdminEmail} from '../../../../lib/adminMagicLink';
 
 export async function POST(req){
   try{
