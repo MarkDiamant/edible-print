@@ -12,9 +12,17 @@ export async function POST(req,{params}){
   if(!isAdminValue(jar.get('edible_admin')?.value))return NextResponse.json({error:'Unauthorized'},{status:401});
   const {id}=await params;
   const db=getSupabaseAdmin();
+  const form=await req.formData().catch(()=>null);
+  const forceClear=String(form?.get('force_clear')||'')==='1';
   const {data:events}=await db.from('order_events').select('event_type,details,created_at').eq('order_id',id).in('event_type',['royal_mail_order_created','royal_mail_order_deleted']).order('created_at',{ascending:false}).limit(20);
   const latest=(events||[]).find(e=>['royal_mail_order_created','royal_mail_order_deleted'].includes(e.event_type));
   if(!latest||latest.event_type==='royal_mail_order_deleted')return NextResponse.redirect(new URL(`/admin/orders/${id}?rm=deleted`,req.url),303);
+
+  if(forceClear){
+    await db.from('order_events').insert({order_id:id,event_type:'royal_mail_order_deleted',actor:'admin',details:{...(latest.details||{}),message:'Marked cancelled in Edible Print because it had already been deleted in Click & Drop'}});
+    return NextResponse.redirect(new URL(`/admin/orders/${id}?rm=deleted`,req.url),303);
+  }
+
   const apiKey=process.env.ROYAL_MAIL_CLICK_DROP_API_KEY;
   if(!apiKey)return NextResponse.redirect(new URL(`/admin/orders/${id}?rm=config`,req.url),303);
   const reference=latest.details?.order_reference;
