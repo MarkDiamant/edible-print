@@ -8,3 +8,5 @@
 .colour-disclaimer{text-align:center;width:100%;padding:8px 16px;box-sizing:border-box;line-height:1.35}
 
 .tutorial{margin-top:36px}.tutorial video{display:block;width:min(100%,520px);max-height:680px;border-radius:14px;background:#000}.cart-artwork{margin:8px 0;padding:10px 12px;background:#f4f7f1;border-radius:8px}.cart-artwork strong{display:block;margin-bottom:4px}
+
+.basket-wrap{position:relative;display:inline-flex}.basket-count{position:absolute;right:-9px;top:-9px;min-width:18px;height:18px;padding:0 4px;border-radius:999px;background:#7c936f;color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center}
