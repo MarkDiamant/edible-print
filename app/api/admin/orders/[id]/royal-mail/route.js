@@ -11,6 +11,29 @@ function serviceCode(choice){
   if(choice==='express')return clean(process.env.ROYAL_MAIL_EXPRESS_SERVICE_CODE)||'TPN24';
   return clean(process.env.ROYAL_MAIL_STANDARD_SERVICE_CODE)||'TPS48';
 }
+function normaliseCreated(result,orderRef){
+  const candidates=[];
+  if(Array.isArray(result?.createdOrders))candidates.push(...result.createdOrders);
+  if(Array.isArray(result?.orders))candidates.push(...result.orders);
+  if(Array.isArray(result))candidates.push(...result);
+  if(result&&typeof result==='object'&&!Array.isArray(result)&&!result.createdOrders&&!result.orders)candidates.push(result);
+  return candidates.find(x=>clean(x?.orderReference)===orderRef)||candidates[0]||null;
+}
+async function fetchByReference(apiKey,orderRef){
+  const token=`%22${encodeURIComponent(orderRef)}%22`;
+  for(let attempt=0;attempt<3;attempt++){
+    if(attempt)await new Promise(resolve=>setTimeout(resolve,450));
+    try{
+      const response=await fetch(`${CLICK_DROP_ORDERS}/${token}`,{headers:{Authorization:apiKey},cache:'no-store'});
+      if(response.status===404)continue;
+      if(!response.ok)continue;
+      const result=await response.json().catch(()=>null);
+      const created=normaliseCreated(result,orderRef);
+      if(created)return created;
+    }catch{}
+  }
+  return null;
+}
 
 export async function POST(req,{params}){
   const jar=await cookies();
@@ -39,10 +62,8 @@ export async function POST(req,{params}){
   const createdEvents=(rmStateEvents||[]).filter(e=>e.event_type==='royal_mail_order_created');
   const latestState=rmStateEvents?.[0]||null;
 
-  // The admin page only shows the create button when its active Royal Mail link has been
-  // cleared/deleted. Click & Drop can continue to return a deleted order by reference for a
-  // while, so do not use that stale lookup to block a replacement order here.
-  // Only guard against a rapid accidental double-submit of a freshly-created active order.
+  // Prevent only a true rapid double-submit. Historical/deleted Click & Drop records must not
+  // block a replacement order because Royal Mail may continue surfacing them for a short time.
   if(latestState?.event_type==='royal_mail_order_created'){
     const ageMs=Date.now()-new Date(latestState.created_at).getTime();
     if(Number.isFinite(ageMs)&&ageMs>=0&&ageMs<15000){
@@ -98,14 +119,20 @@ export async function POST(req,{params}){
   try{
     const response=await fetch(CLICK_DROP_ORDERS,{method:'POST',headers:{Authorization:apiKey,'Content-Type':'application/json'},body:JSON.stringify(payload),cache:'no-store'});
     const result=await response.json().catch(()=>({}));
-    const created=result?.createdOrders?.[0];
-    if(!response.ok||!created||result?.errorsCount>0){
-      const message=result?.failedOrders?.[0]?.errors?.[0]?.message||result?.message||`Royal Mail returned ${response.status}`;
+    let created=normaliseCreated(result,orderRef);
+
+    // Click & Drop sometimes returns HTTP 200 without the older createdOrders envelope.
+    // A 200 is not an error by itself: verify the fresh unique reference before failing.
+    if(response.ok&&!created)created=await fetchByReference(apiKey,orderRef);
+
+    if(!response.ok||!created||Number(result?.errorsCount||0)>0){
+      const message=result?.failedOrders?.[0]?.errors?.[0]?.message||result?.errors?.[0]?.message||result?.message||`Royal Mail returned ${response.status} but the new order could not be verified`;
       console.error('Click & Drop order export failed',response.status,message);
       await db.from('order_events').insert({order_id:id,event_type:'royal_mail_order_failed',actor:'admin',details:{message:String(message).slice(0,500),sheet_count:sheetCount,weight_grams:weightInGrams,shipping_method:order.shipping_method,postage_choice:postageChoice,service_code:code,order_reference:orderRef}});
       return NextResponse.redirect(new URL(`/admin/orders/${id}?rm=failed`,req.url),303);
     }
-    await db.from('order_events').insert({order_id:id,event_type:'royal_mail_order_created',actor:'admin',details:{order_identifier:created.orderIdentifier||null,order_reference:created.orderReference||orderRef,tracking_number:created.trackingNumber||null,sheet_count:sheetCount,weight_grams:weightInGrams,shipping_method:order.shipping_method,postage_choice:postageChoice,service_code:code,replacement_number:createdEvents.length?replacementNumber:null}});
+
+    await db.from('order_events').insert({order_id:id,event_type:'royal_mail_order_created',actor:'admin',details:{order_identifier:created.orderIdentifier||created.orderId||created.id||null,order_reference:created.orderReference||orderRef,tracking_number:created.trackingNumber||null,sheet_count:sheetCount,weight_grams:weightInGrams,shipping_method:order.shipping_method,postage_choice:postageChoice,service_code:code,replacement_number:createdEvents.length?replacementNumber:null}});
     return NextResponse.redirect(new URL(`/admin/orders/${id}?rm=created`,req.url),303);
   }catch(error){
     console.error('Click & Drop order export error',error);
