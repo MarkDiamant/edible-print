@@ -21,6 +21,7 @@ export async function POST(req,{params}){
   const {data:existing}=await db.from('order_events').select('details').eq('order_id',id).eq('event_type','royal_mail_order_created').order('created_at',{ascending:false}).limit(1);
   if(existing?.length)return NextResponse.redirect(new URL(`/admin/orders/${id}?rm=exists`,req.url),303);
 
+  // Secret is configured in Vercel production environment, never in source control.
   const apiKey=process.env.ROYAL_MAIL_CLICK_DROP_API_KEY;
   if(!apiKey)return NextResponse.redirect(new URL(`/admin/orders/${id}?rm=config`,req.url),303);
 
