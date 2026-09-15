@@ -25,7 +25,7 @@ export async function POST(req){
       mode:'payment',
       customer_creation:'always',
       billing_address_collection:'auto',
-      shipping_address_collection:{allowed_countries:['GB']},
+      ...(delivery==='collection'?{}:{shipping_address_collection:{allowed_countries:['GB']}}),
       phone_number_collection:{enabled:true},
       line_items:lineItems,
       metadata:{site:'edible-print',cart_id:cartId,delivery:snapshot.delivery},
