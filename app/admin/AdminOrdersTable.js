@@ -1,7 +1,9 @@
 'use client';
 
-import {useMemo,useState} from 'react';
+import {useEffect,useMemo,useState} from 'react';
 import {useRouter} from 'next/navigation';
+
+const CLICK_DROP_URL='https://business.parcel.royalmail.com/orders';
 
 export default function AdminOrdersTable({orders}){
   const router=useRouter();
@@ -10,19 +12,38 @@ export default function AdminOrdersTable({orders}){
   const [busy,setBusy]=useState(false);
   const allSelected=eligible.length>0&&eligible.every(o=>selected.includes(o.id));
 
+  useEffect(()=>{
+    const preconnect=document.createElement('link');
+    preconnect.rel='preconnect';
+    preconnect.href='https://business.parcel.royalmail.com';
+    preconnect.crossOrigin='anonymous';
+    document.head.appendChild(preconnect);
+    const dns=document.createElement('link');
+    dns.rel='dns-prefetch';
+    dns.href='//business.parcel.royalmail.com';
+    document.head.appendChild(dns);
+    return ()=>{preconnect.remove();dns.remove()};
+  },[]);
+
   function toggle(id){setSelected(xs=>xs.includes(id)?xs.filter(x=>x!==id):[...xs,id])}
   function toggleAll(){setSelected(allSelected?[]:eligible.map(o=>o.id))}
   async function preparePostage(){
     if(!selected.length||busy)return;
     setBusy(true);
+    const royalMailTab=window.open(CLICK_DROP_URL,'_blank');
     try{
       const payload={orders:selected.map(id=>{const order=orders.find(o=>o.id===id);return {id,postage_service:order?.shipping_method==='express'?'express':'standard'}})};
       const response=await fetch('/api/admin/orders/bulk-royal-mail',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
       const result=await response.json().catch(()=>({}));
       if(!response.ok)throw new Error(result.error||'Could not prepare postage');
-      if(result.clickDropUrl)window.location.href=result.clickDropUrl;
-      else router.refresh();
-    }catch(e){alert(e.message||'Could not prepare postage');setBusy(false)}
+      if(royalMailTab&&!royalMailTab.closed)royalMailTab.location.href=result.clickDropUrl||CLICK_DROP_URL;
+      else if(result.clickDropUrl)window.location.href=result.clickDropUrl;
+      router.refresh();
+    }catch(e){
+      if(royalMailTab&&!royalMailTab.closed)royalMailTab.close();
+      alert(e.message||'Could not prepare postage');
+      setBusy(false);
+    }
   }
 
   return <div className="admin-orders-modern">
