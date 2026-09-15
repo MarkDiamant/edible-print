@@ -23,7 +23,7 @@ function totals(items,delivery){
   return {subtotal,shipping,total:subtotal+shipping};
 }
 
-async function createOrder({db,cartId,items,delivery,email,phone,fullName,address,paymentIntentId,checkoutSessionId,paidAmount,actor}){
+async function createOrder({db,cartId,items,delivery,email,phone,fullName,address,paymentIntentId,checkoutSessionId,paidAmount,actor,customerMessage=''}){
   if(paymentIntentId){
     const {data:existing}=await db.from('orders').select('id').eq('stripe_payment_intent_id',paymentIntentId).maybeSingle();
     if(existing)return existing.id;
@@ -55,6 +55,8 @@ async function createOrder({db,cartId,items,delivery,email,phone,fullName,addres
   }
   await db.from('draft_carts').update({email:email||null,first_name:firstName,last_name:lastName,phone:phone||null,shipping_address:address||{},shipping_method:delivery,expires_at:new Date(Date.now()+30*24*60*60*1000).toISOString()}).eq('id',cartId);
   await db.from('order_events').insert({order_id:order.id,event_type:'payment_received',actor,details:{checkout_session_id:checkoutSessionId||null,payment_intent_id:paymentIntentId||null}});
+  const note=String(customerMessage||'').trim();
+  if(note)await db.from('order_events').insert({order_id:order.id,event_type:'customer_message',actor:'customer',details:{message:note.slice(0,450)}});
   return order.id;
 }
 
@@ -66,7 +68,7 @@ async function persistCheckoutSession(session){
   const delivery=['collection','express'].includes(session.metadata?.delivery)?session.metadata.delivery:'standard';
   const shippingDetails=session.collected_information?.shipping_details||session.shipping_details||null;
   const customer=session.customer_details||{};
-  return createOrder({db,cartId,items,delivery,email:customer.email||session.customer_email,phone:customer.phone,fullName:shippingDetails?.name||customer.name,address:shippingDetails?.address||customer.address||{},paymentIntentId:typeof session.payment_intent==='string'?session.payment_intent:session.payment_intent?.id,checkoutSessionId:session.id,paidAmount:session.amount_total,actor:'stripe_checkout_webhook'});
+  return createOrder({db,cartId,items,delivery,email:customer.email||session.customer_email,phone:customer.phone,fullName:shippingDetails?.name||customer.name,address:shippingDetails?.address||customer.address||{},paymentIntentId:typeof session.payment_intent==='string'?session.payment_intent:session.payment_intent?.id,checkoutSessionId:session.id,paidAmount:session.amount_total,actor:'stripe_checkout_webhook',customerMessage:session.metadata?.customer_message||''});
 }
 
 async function persistPaymentIntent(stripe,pi){
@@ -80,7 +82,7 @@ async function persistPaymentIntent(stripe,pi){
   else method=pi.payment_method;
   const billing=method?.billing_details||{};
   const shipping=pi.shipping||{};
-  return createOrder({db,cartId,items,delivery,email:billing.email||pi.receipt_email,phone:billing.phone||shipping.phone,fullName:shipping.name||billing.name,address:shipping.address||billing.address||{},paymentIntentId:pi.id,checkoutSessionId:null,paidAmount:pi.amount_received||pi.amount,actor:'stripe_payment_intent_webhook'});
+  return createOrder({db,cartId,items,delivery,email:billing.email||pi.receipt_email,phone:billing.phone||shipping.phone,fullName:shipping.name||billing.name,address:shipping.address||billing.address||{},paymentIntentId:pi.id,checkoutSessionId:null,paidAmount:pi.amount_received||pi.amount,actor:'stripe_payment_intent_webhook',customerMessage:pi.metadata?.customer_message||''});
 }
 
 export async function POST(req){
