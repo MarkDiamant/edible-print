@@ -3,6 +3,7 @@ import {isAdminValue} from '../../lib/adminAuth';
 import {getSupabaseAdmin} from '../../lib/supabaseAdmin';
 import {formatOrderNumber} from '../../lib/orderNumber';
 import AdminLogin from './AdminLogin';
+import AdminOrdersTable from './AdminOrdersTable';
 
 export const dynamic='force-dynamic';
 
@@ -18,8 +19,8 @@ export default async function Admin({searchParams}){
     const db=getSupabaseAdmin();
     const {data,error}=await db.from('admin_order_summary').select('*').order('created_at',{ascending:false}).limit(100);
     if(error)throw error;
-    orders=data||[];
+    orders=(data||[]).map(o=>({...o,display_order_number:formatOrderNumber(o.order_number)}));
   }catch(e){configError=e.message||'Admin database connection is not configured.'}
   const paid=orders.filter(o=>o.payment_status==='paid').length,open=orders.filter(o=>o.fulfilment_status!=='fulfilled').length,total=orders.reduce((s,o)=>s+(o.total_pence||0),0);
-  return <main className="admin-shell"><header className="admin-top"><div><h1>Edible Print</h1><p>Orders</p></div><div className="admin-top-actions"><a href="/" className="admin-store-link">View shop</a><form action="/api/admin/logout" method="post"><button className="admin-store-link admin-logout" type="submit">Log out</button></form></div></header><section className="admin-stats"><div><span>Orders</span><strong>{orders.length}</strong></div><div><span>Paid</span><strong>{paid}</strong></div><div><span>To fulfil</span><strong>{open}</strong></div><div><span>Sales</span><strong>£{(total/100).toFixed(2)}</strong></div></section><section className="admin-panel"><div className="admin-panel-head"><h2>Orders</h2><span>{orders.length} orders</span></div>{configError?<p>{configError}</p>:!orders.length?<p>No paid orders yet.</p>:<div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Order</th><th>Date</th><th>Customer</th><th>Total</th><th>Payment</th><th>Fulfilment</th><th>Artwork</th><th>Delivery</th></tr></thead><tbody>{orders.map(o=><tr key={o.id}><td><a className="admin-order-link" href={`/admin/orders/${o.id}`}>#{formatOrderNumber(o.order_number)}</a></td><td>{new Date(o.created_at).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</td><td><strong>{o.first_name} {o.last_name}</strong><br/><small>{o.email}</small></td><td>£{(o.total_pence/100).toFixed(2)}</td><td><span className="admin-pill paid">{o.payment_status}</span></td><td><span className={`admin-pill ${o.fulfilment_status==='fulfilled'?'fulfilled':'open'}`}>{o.fulfilment_status}</span></td><td>{o.artwork_count||0}</td><td>{o.shipping_method}</td></tr>)}</tbody></table></div>}</section></main>;
+  return <main className="admin-shell"><header className="admin-top"><div><h1>Edible Print</h1><p>Orders</p></div><div className="admin-top-actions"><a href="/" className="admin-store-link">View shop</a><form action="/api/admin/logout" method="post"><button className="admin-store-link admin-logout" type="submit">Log out</button></form></div></header><section className="admin-stats"><div><span>Orders</span><strong>{orders.length}</strong></div><div><span>Paid</span><strong>{paid}</strong></div><div><span>To fulfil</span><strong>{open}</strong></div><div><span>Sales</span><strong>£{(total/100).toFixed(2)}</strong></div></section><section className="admin-panel"><div className="admin-panel-head"><div><h2>Orders</h2><p style={{margin:'4px 0 0',color:'#6c716b',fontSize:14}}>Click anywhere on an order to open it.</p></div><span>{orders.length} orders</span></div>{configError?<p>{configError}</p>:!orders.length?<p>No paid orders yet.</p>:<AdminOrdersTable orders={orders}/>}</section></main>;
 }
