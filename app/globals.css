@@ -29,3 +29,5 @@
 .tutorial-video-frame{background:#fff;aspect-ratio:auto}.tutorial-video-frame video{width:100%;height:auto;max-height:none;object-fit:cover;background:#fff}
 
 .filelist span{display:flex;align-items:center;justify-content:space-between;gap:12px}.remove-file{border:0;background:transparent;text-decoration:underline;cursor:pointer;font:inherit;font-size:13px;padding:3px}
+
+.checkout-contact{display:grid;gap:12px;margin-bottom:22px}.checkout-contact h2{margin:0 0 4px}.checkout-contact label{display:grid;gap:6px;font-weight:600}.checkout-contact input{width:100%;box-sizing:border-box;padding:13px;border:1px solid var(--line);border-radius:9px;font:inherit}
