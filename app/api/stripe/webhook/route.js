@@ -55,6 +55,10 @@ async function createOrder({db,cartId,items,delivery,email,phone,fullName,addres
   }
   await db.from('draft_carts').update({email:email||null,first_name:firstName,last_name:lastName,phone:phone||null,shipping_address:address||{},shipping_method:delivery,expires_at:new Date(Date.now()+30*24*60*60*1000).toISOString()}).eq('id',cartId);
   await db.from('order_events').insert({order_id:order.id,event_type:'payment_received',actor,details:{checkout_session_id:checkoutSessionId||null,payment_intent_id:paymentIntentId||null}});
+  for(const item of items){
+    const instructionText=String(item.instructions||item.print_instructions||'').trim();
+    if(instructionText)await db.from('order_events').insert({order_id:order.id,event_type:'artwork_instructions',actor:'customer',details:{source_draft_item_id:item.id,product_title:item.product_title,instructions:instructionText.slice(0,4000)}});
+  }
   const note=String(customerMessage||'').trim();
   if(note)await db.from('order_events').insert({order_id:order.id,event_type:'customer_message',actor:'customer',details:{message:note.slice(0,450)}});
   return order.id;
