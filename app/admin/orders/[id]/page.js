@@ -5,6 +5,7 @@ import {getSupabaseAdmin} from '../../../../lib/supabaseAdmin';
 import {formatOrderNumber} from '../../../../lib/orderNumber';
 
 export const dynamic='force-dynamic';
+const CLICK_DROP_ORDERS='https://api.parcel.royalmail.com/api/v1/Orders';
 
 function parseArtworkInstructions(text=''){
   const chunks=String(text).split(/\n\n(?=IMAGE \d+: )/i);
@@ -28,6 +29,7 @@ function eventLabel(event){
   if(t==='email_feedback')return d.scheduled_at?'Feedback email was scheduled for the customer.':'Feedback email was sent to the customer.';
   if(t==='email_failed')return `Customer email failed${d.type?` (${d.type})`:''}.`;
   if(t==='royal_mail_order_created')return `Royal Mail order created${d.order_reference?` (${d.order_reference})`:''}.`;
+  if(t==='royal_mail_order_deleted')return 'Royal Mail order was deleted in Click & Drop.';
   if(t==='royal_mail_order_failed')return 'Royal Mail order creation failed.';
   if(t==='refund_issued')return `Full refund issued${d.amount?` — £${(Number(d.amount)/100).toFixed(2)}`:''}.`;
   if(t==='refund_failed')return 'Refund attempt failed.';
@@ -38,6 +40,22 @@ function eventLabel(event){
 
 function eventTime(value){
   try{return new Date(value).toLocaleString('en-GB',{timeZone:'Europe/London',day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}catch{return ''}
+}
+
+async function remoteOrderExists(details={}){
+  const apiKey=process.env.ROYAL_MAIL_CLICK_DROP_API_KEY;
+  const identifier=details.order_identifier||details.order_reference;
+  if(!apiKey||!identifier)return true;
+  const token=details.order_identifier?String(identifier):`"${encodeURIComponent(String(identifier))}"`;
+  try{
+    const response=await fetch(`${CLICK_DROP_ORDERS}/${token}`,{headers:{Authorization:apiKey},cache:'no-store'});
+    if(response.status===404)return false;
+    if(!response.ok)return true;
+    const result=await response.json().catch(()=>null);
+    if(Array.isArray(result))return result.length>0;
+    if(Array.isArray(result?.orders))return result.orders.length>0;
+    return true;
+  }catch{return true}
 }
 
 const card={background:'#fff',border:'1px solid #e4e4df',borderRadius:14,padding:20,boxShadow:'0 1px 2px rgba(0,0,0,.04)'};
@@ -55,8 +73,15 @@ export default async function OrderDetail({params,searchParams}){
   const {data:events}=await db.from('order_events').select('event_type,details,created_at').eq('order_id',id).order('created_at',{ascending:false});
   const messages=(events||[]).filter(e=>e.event_type==='customer_message');
   const instructionEvents=(events||[]).filter(e=>e.event_type==='artwork_instructions');
-  const rmEvents=(events||[]).filter(e=>['royal_mail_order_created','royal_mail_order_failed'].includes(e.event_type));
-  const royalMail=rmEvents.find(x=>x.event_type==='royal_mail_order_created')||null;
+  const rmEvents=(events||[]).filter(e=>['royal_mail_order_created','royal_mail_order_deleted','royal_mail_order_failed'].includes(e.event_type));
+  const latestRmState=(events||[]).find(e=>['royal_mail_order_created','royal_mail_order_deleted'].includes(e.event_type));
+  let royalMail=latestRmState?.event_type==='royal_mail_order_created'?latestRmState:null;
+  let syncedDeletedEvent=null;
+  if(royalMail&&!(await remoteOrderExists(royalMail.details||{}))){
+    syncedDeletedEvent={event_type:'royal_mail_order_deleted',actor:'sync',created_at:new Date().toISOString(),details:{...(royalMail.details||{}),message:'Order no longer exists in Click & Drop'}};
+    await db.from('order_events').insert({order_id:id,event_type:'royal_mail_order_deleted',actor:'sync',details:syncedDeletedEvent.details});
+    royalMail=null;
+  }
   const customerMessage=messages?.[0]?.details?.message||'';
   const instructionMap=new Map(instructionEvents.map(e=>[e.details?.source_draft_item_id,parseArtworkInstructions(e.details?.instructions||'')]));
   const signed=[];
@@ -72,9 +97,10 @@ export default async function OrderDetail({params,searchParams}){
   const sheetCount=Math.max(1,(items||[]).reduce((n,x)=>n+(Number(x.quantity)||0),0));
   const mailWeight=83+Math.max(0,sheetCount-1)*30;
   const defaultPostage=order.shipping_method==='express'?'express':'standard';
+  const postageName=defaultPostage==='express'?'Tracked 24 Large Letter':'Tracked 48 Large Letter';
   const number=formatOrderNumber(order.order_number);
-  const timeline=(events||[]).map(e=>({...e,label:eventLabel(e)})).filter(e=>e.label);
-  const rmNotice=query?.rm==='created'?'Royal Mail order created successfully.':query?.rm==='exists'?'This order has already been created in Click & Drop.':query?.rm==='failed'?'Royal Mail could not accept the order. Check the latest error below and try again.':query?.rm==='config'?'Click & Drop API key is not configured.':query?.rm==='weight'?'This order is over the 750g Large Letter limit and needs manual postage setup.':'';
+  const timeline=[...(syncedDeletedEvent?[syncedDeletedEvent]:[]),...(events||[])].map(e=>({...e,label:eventLabel(e)})).filter(e=>e.label);
+  const rmNotice=query?.rm==='created'?'Royal Mail order created successfully.':query?.rm==='exists'?'This order already exists in Click & Drop.':query?.rm==='failed'?'Royal Mail could not accept the order. Check the latest error below and try again.':query?.rm==='config'?'Click & Drop API key is not configured.':query?.rm==='weight'?'This order is over the 750g Large Letter limit and needs manual postage setup.':'';
   const notice=query?.refund==='done'?'Refund completed successfully.':query?.refund==='failed'?'Refund failed — check the timeline/error logs.':query?.refund==='exists'?'This order has already been refunded.':query?.return==='done'?'Return recorded successfully.':query?.return==='exists'?'This order is already marked returned.':'';
   return <main className="admin-shell" style={{maxWidth:1220,margin:'0 auto',padding:'24px 20px 50px'}}>
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:16,flexWrap:'wrap',marginBottom:18}}>
@@ -100,8 +126,8 @@ export default async function OrderDetail({params,searchParams}){
           <div style={{display:'grid',gridTemplateColumns:'1fr auto',gap:'10px 16px'}}><span>Subtotal</span><strong>£{(order.subtotal_pence/100).toFixed(2)}</strong><span>Shipping · {isCollection?'Collection':order.shipping_method==='express'?'Express':'Standard'}</span><strong>{order.shipping_pence?`£${(order.shipping_pence/100).toFixed(2)}`:'FREE'}</strong><span style={{fontWeight:700,borderTop:'1px solid #eee',paddingTop:10}}>Total</span><strong style={{borderTop:'1px solid #eee',paddingTop:10}}>£{(order.total_pence/100).toFixed(2)}</strong></div>
         </section>
         {!isCollection&&<section style={card}>
-          <h2 style={{margin:'0 0 6px',fontSize:19}}>Postage</h2><p style={{margin:'0 0 14px',color:'#60656b'}}>Customer selected <strong>{order.shipping_method==='express'?'Express':'Standard'}</strong>. Large Letter · {sheetCount} {sheetCount===1?'sheet':'sheets'} · estimated {mailWeight}g.</p>
-          {royalMail?<><div style={{background:'#eef8ef',border:'1px solid #cfe5d2',borderRadius:10,padding:14,marginBottom:12}}><strong>Royal Mail order created</strong><p style={{margin:'6px 0 0'}}>Reference: {royalMail.details?.order_reference||`EP-${number}`}{royalMail.details?.order_identifier?` · Royal Mail order ${royalMail.details.order_identifier}`:''}{royalMail.details?.tracking_number?` · ${royalMail.details.tracking_number}`:''}</p><p style={{margin:'5px 0 0'}}>Postage choice: <strong>{royalMail.details?.postage_choice==='express'?'Express':'Standard'}</strong></p></div><a className="btn" href="https://business.parcel.royalmail.com/orders" target="_blank" rel="noopener noreferrer">Pay / print label in Click & Drop</a></>:<form action={`/api/admin/orders/${id}/royal-mail`} method="post" style={{display:'grid',gap:10,maxWidth:430}}><label style={{display:'grid',gap:6,fontWeight:600}}>Royal Mail service<select name="postage_service" defaultValue={defaultPostage} style={{padding:11,border:'1px solid #ccd2da',borderRadius:8,font:'inherit',background:'#fff'}}><option value="standard">Standard — customer choice</option><option value="express">Express</option></select></label><button className="btn" type="submit" style={{justifySelf:'start'}}>Create Royal Mail order</button></form>}
+          <h2 style={{margin:'0 0 6px',fontSize:19}}>Postage</h2><p style={{margin:'0 0 14px',color:'#60656b'}}>Customer selected <strong>{order.shipping_method==='express'?'Express':'Standard'}</strong> → <strong>{postageName}</strong>. Large Letter · {sheetCount} {sheetCount===1?'sheet':'sheets'} · estimated {mailWeight}g.</p>
+          {royalMail?<><div style={{background:'#eef8ef',border:'1px solid #cfe5d2',borderRadius:10,padding:14,marginBottom:12}}><strong>Royal Mail order created</strong><p style={{margin:'6px 0 0'}}>Reference: {royalMail.details?.order_reference||`EP-${number}`}{royalMail.details?.order_identifier?` · Royal Mail order ${royalMail.details.order_identifier}`:''}{royalMail.details?.tracking_number?` · ${royalMail.details.tracking_number}`:''}</p><p style={{margin:'5px 0 0'}}>Service: <strong>{postageName}</strong></p></div><a className="btn" href="https://business.parcel.royalmail.com/orders" target="_blank" rel="noopener noreferrer">Pay / print label in Click & Drop</a></>:<form action={`/api/admin/orders/${id}/royal-mail`} method="post" style={{display:'grid',gap:10,maxWidth:430}}><input type="hidden" name="postage_service" value={defaultPostage}/><div style={{background:'#f7f8f6',border:'1px solid #e2e5df',borderRadius:10,padding:'11px 13px'}}><strong>{postageName}</strong><div style={{fontSize:13,color:'#687068',marginTop:3}}>Automatically selected from the customer's checkout choice.</div></div><button className="btn" type="submit" style={{justifySelf:'start'}}>Create Royal Mail order</button></form>}
           {rmNotice&&<p style={{margin:'12px 0 0',fontWeight:600}}>{rmNotice}</p>}
           {query?.rm==='failed'&&rmEvents?.[0]?.event_type==='royal_mail_order_failed'&&<p style={{margin:'6px 0 0',color:'#8a2d2d'}}>{rmEvents[0].details?.message||'Royal Mail returned an error.'}</p>}
         </section>}
