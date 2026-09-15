@@ -12,9 +12,10 @@ function serviceCode(choice){
   return clean(process.env.ROYAL_MAIL_STANDARD_SERVICE_CODE)||'TPS48';
 }
 async function remoteOrderExists(apiKey,details={}){
-  const identifier=details.order_identifier||details.order_reference;
-  if(!identifier)return false;
-  const token=details.order_identifier?String(identifier):`"${encodeURIComponent(String(identifier))}"`;
+  const reference=clean(details.order_reference);
+  const identifier=clean(details.order_identifier);
+  if(!reference&&!identifier)return false;
+  const token=reference?`%22${encodeURIComponent(reference)}%22`:identifier;
   try{
     const response=await fetch(`${CLICK_DROP_ORDERS}/${token}`,{headers:{Authorization:apiKey},cache:'no-store'});
     if(response.status===404)return false;
@@ -22,7 +23,7 @@ async function remoteOrderExists(apiKey,details={}){
     const result=await response.json().catch(()=>null);
     if(Array.isArray(result))return result.length>0;
     if(Array.isArray(result?.orders))return result.orders.length>0;
-    return true;
+    return Boolean(result);
   }catch{return true}
 }
 
@@ -43,11 +44,19 @@ export async function POST(req,{params}){
   const apiKey=process.env.ROYAL_MAIL_CLICK_DROP_API_KEY;
   if(!apiKey)return NextResponse.redirect(new URL(`/admin/orders/${id}?rm=config`,req.url),303);
 
-  const {data:existing}=await db.from('order_events').select('details,created_at').eq('order_id',id).eq('event_type','royal_mail_order_created').order('created_at',{ascending:false}).limit(1);
-  if(existing?.length){
-    const stillThere=await remoteOrderExists(apiKey,existing[0].details||{});
+  const {data:rmStateEvents}=await db.from('order_events')
+    .select('event_type,details,created_at')
+    .eq('order_id',id)
+    .in('event_type',['royal_mail_order_created','royal_mail_order_deleted'])
+    .order('created_at',{ascending:false})
+    .limit(50);
+  const latestState=rmStateEvents?.[0]||null;
+  const createdCount=(rmStateEvents||[]).filter(e=>e.event_type==='royal_mail_order_created').length;
+
+  if(latestState?.event_type==='royal_mail_order_created'){
+    const stillThere=await remoteOrderExists(apiKey,latestState.details||{});
     if(stillThere)return NextResponse.redirect(new URL(`/admin/orders/${id}?rm=exists`,req.url),303);
-    await db.from('order_events').insert({order_id:id,event_type:'royal_mail_order_deleted',actor:'sync',details:{...(existing[0].details||{}),message:'Order no longer exists in Click & Drop'}});
+    await db.from('order_events').insert({order_id:id,event_type:'royal_mail_order_deleted',actor:'sync',details:{...(latestState.details||{}),message:'Order no longer exists in Click & Drop'}});
   }
 
   const {data:items,error:itemError}=await db.from('order_items').select('quantity').eq('order_id',id);
@@ -61,7 +70,8 @@ export async function POST(req,{params}){
 
   const a=order.shipping_address||{};
   const customerName=`${clean(order.first_name)} ${clean(order.last_name)}`.trim()||'Customer';
-  const orderRef=`EP-${formatOrderNumber(order.order_number)}`;
+  const baseRef=`EP-${formatOrderNumber(order.order_number)}`;
+  const orderRef=createdCount>0?`${baseRef}-R${createdCount+1}`:baseRef;
   const code=serviceCode(postageChoice);
   const payload={items:[{
     orderReference:orderRef,
@@ -99,14 +109,14 @@ export async function POST(req,{params}){
     if(!response.ok||!created||result?.errorsCount>0){
       const message=result?.failedOrders?.[0]?.errors?.[0]?.message||result?.message||`Royal Mail returned ${response.status}`;
       console.error('Click & Drop order export failed',response.status,message);
-      await db.from('order_events').insert({order_id:id,event_type:'royal_mail_order_failed',actor:'admin',details:{message:String(message).slice(0,500),sheet_count:sheetCount,weight_grams:weightInGrams,shipping_method:order.shipping_method,postage_choice:postageChoice,service_code:code}});
+      await db.from('order_events').insert({order_id:id,event_type:'royal_mail_order_failed',actor:'admin',details:{message:String(message).slice(0,500),sheet_count:sheetCount,weight_grams:weightInGrams,shipping_method:order.shipping_method,postage_choice:postageChoice,service_code:code,order_reference:orderRef}});
       return NextResponse.redirect(new URL(`/admin/orders/${id}?rm=failed`,req.url),303);
     }
-    await db.from('order_events').insert({order_id:id,event_type:'royal_mail_order_created',actor:'admin',details:{order_identifier:created.orderIdentifier||null,order_reference:created.orderReference||orderRef,tracking_number:created.trackingNumber||null,sheet_count:sheetCount,weight_grams:weightInGrams,shipping_method:order.shipping_method,postage_choice:postageChoice,service_code:code}});
+    await db.from('order_events').insert({order_id:id,event_type:'royal_mail_order_created',actor:'admin',details:{order_identifier:created.orderIdentifier||null,order_reference:created.orderReference||orderRef,tracking_number:created.trackingNumber||null,sheet_count:sheetCount,weight_grams:weightInGrams,shipping_method:order.shipping_method,postage_choice:postageChoice,service_code:code,replacement_number:createdCount>0?createdCount+1:null}});
     return NextResponse.redirect(new URL(`/admin/orders/${id}?rm=created`,req.url),303);
   }catch(error){
     console.error('Click & Drop order export error',error);
-    await db.from('order_events').insert({order_id:id,event_type:'royal_mail_order_failed',actor:'admin',details:{message:String(error?.message||error).slice(0,500),sheet_count:sheetCount,weight_grams:weightInGrams,shipping_method:order.shipping_method,postage_choice:postageChoice,service_code:code}});
+    await db.from('order_events').insert({order_id:id,event_type:'royal_mail_order_failed',actor:'admin',details:{message:String(error?.message||error).slice(0,500),sheet_count:sheetCount,weight_grams:weightInGrams,shipping_method:order.shipping_method,postage_choice:postageChoice,service_code:code,order_reference:orderRef}});
     return NextResponse.redirect(new URL(`/admin/orders/${id}?rm=failed`,req.url),303);
   }
 }
