@@ -20,9 +20,12 @@ function normaliseCreated(result,orderRef){
   return candidates.find(x=>clean(x?.orderReference)===orderRef)||candidates[0]||null;
 }
 async function fetchByReference(apiKey,orderRef){
-  const token=`%22${encodeURIComponent(orderRef)}%22`;
-  for(let attempt=0;attempt<3;attempt++){
-    if(attempt)await new Promise(resolve=>setTimeout(resolve,450));
+  // Royal Mail's GET-by-reference endpoint expects the reference as a normal
+  // URL path segment. The previous code wrapped it in encoded quote marks,
+  // which meant a successful asynchronous create could never be verified.
+  const token=encodeURIComponent(orderRef);
+  for(let attempt=0;attempt<8;attempt++){
+    if(attempt)await new Promise(resolve=>setTimeout(resolve,1000));
     try{
       const response=await fetch(`${CLICK_DROP_ORDERS}/${token}`,{headers:{Authorization:apiKey},cache:'no-store'});
       if(response.status===404)continue;
