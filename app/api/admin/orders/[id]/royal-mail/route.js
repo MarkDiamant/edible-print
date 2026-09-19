@@ -19,6 +19,14 @@ function normaliseCreated(result,orderRef){
   if(result&&typeof result==='object'&&!Array.isArray(result)&&!result.createdOrders&&!result.orders)candidates.push(result);
   return candidates.find(x=>clean(x?.orderReference)===orderRef)||candidates[0]||null;
 }
+function createWasAccepted(result,orderRef){
+  if(!result||typeof result!=='object')return false;
+  if(Number(result?.errorsCount||0)>0)return false;
+  if(Array.isArray(result?.failedOrders)&&result.failedOrders.length)return false;
+  if(normaliseCreated(result,orderRef))return true;
+  const createdCount=Number(result?.createdOrdersCount??result?.ordersCreated??result?.successCount??0);
+  return Number.isFinite(createdCount)&&createdCount>0;
+}
 async function fetchByReference(apiKey,orderRef){
   // Royal Mail's GET-by-reference endpoint expects the reference as a normal
   // URL path segment. The previous code wrapped it in encoded quote marks,
@@ -127,6 +135,13 @@ export async function POST(req,{params}){
     // Click & Drop sometimes returns HTTP 200 without the older createdOrders envelope.
     // A 200 is not an error by itself: verify the fresh unique reference before failing.
     if(response.ok&&!created)created=await fetchByReference(apiKey,orderRef);
+
+    // Click & Drop can accept an import (HTTP 200) before its GET endpoint can
+    // return the new order. Do not turn a successful import into a false failure.
+    // We use a unique reference for every replacement, so recording the accepted
+    // reference is safe even when Royal Mail's read side is still catching up.
+    const accepted=response.ok&&createWasAccepted(result,orderRef);
+    if(response.ok&&!created&&accepted)created={orderReference:orderRef};
 
     if(!response.ok||!created||Number(result?.errorsCount||0)>0){
       const message=result?.failedOrders?.[0]?.errors?.[0]?.message||result?.errors?.[0]?.message||result?.message||`Royal Mail returned ${response.status} but the new order could not be verified`;
