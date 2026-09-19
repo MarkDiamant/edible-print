@@ -1,8 +1,9 @@
 'use client';
-import {useEffect} from 'react';
+import {useEffect,useState} from 'react';
+import {useSearchParams} from 'next/navigation';
 import Link from 'next/link';
-
 export default function SuccessClient(){
-  useEffect(()=>{localStorage.removeItem('edible-cart-auth');localStorage.removeItem('ep_order_message')},[]);
-  return <main className="success"><div className="tick">✓</div><h1>Thank you for your order</h1><p>Your payment has been received. You’ll receive an order confirmation by email, and we’ll send further updates as your order progresses. We’ll also check your artwork before printing and contact you if anything needs attention.</p><Link className="btn" href="/">Back to Edible Print</Link></main>;
+ const q=useSearchParams(),[ready,setReady]=useState(false),[problem,setProblem]=useState('');
+ useEffect(()=>{let cancelled=false;async function finish(){const paymentIntentId=q.get('payment_intent');if(paymentIntentId){try{const r=await fetch('/api/finalize-order',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({paymentIntentId})});if(!r.ok)throw new Error('finalise failed')}catch(e){if(!cancelled)setProblem('Your payment succeeded, but the order is still being finalised. Please contact us if it does not appear shortly.');return}}try{localStorage.removeItem('edible-cart-auth');localStorage.removeItem('ep_order_message');sessionStorage.removeItem('ep_checkout_secret');sessionStorage.removeItem('ep_checkout_delivery')}catch{}if(!cancelled)setReady(true)}finish();return()=>{cancelled=true}},[q]);
+ return <main className="success"><div className="tick">✓</div><h1>Thank you for your order</h1>{problem?<p>{problem}</p>:<p>{ready?'Your payment has been received and your order is confirmed.':'Confirming your order details and artwork…'}</p>}<p>You’ll receive an order confirmation by email, and we’ll send further updates as your order progresses. We’ll also check your artwork before printing and contact you if anything needs attention.</p><Link className="btn" href="/">Back to Edible Print</Link></main>
 }
