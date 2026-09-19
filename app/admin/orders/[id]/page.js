@@ -47,7 +47,7 @@ async function remoteOrderExists(details={}){
   const reference=String(details.order_reference||'').trim();
   const identifier=String(details.order_identifier||'').trim();
   if(!apiKey||(!reference&&!identifier))return true;
-  const token=reference?`%22${encodeURIComponent(reference)}%22`:identifier;
+  const token=reference?encodeURIComponent(reference):identifier;
   try{
     const response=await fetch(`${CLICK_DROP_ORDERS}/${token}`,{headers:{Authorization:apiKey},cache:'no-store'});
     if(response.status===404)return false;
@@ -126,11 +126,29 @@ export default async function OrderDetail({params,searchParams}){
           <h2 style={{margin:'0 0 14px',fontSize:19}}>Paid</h2>
           <div style={{display:'grid',gridTemplateColumns:'1fr auto',gap:'10px 16px'}}><span>Subtotal</span><strong>£{(order.subtotal_pence/100).toFixed(2)}</strong><span>Shipping · {isCollection?'Collection':order.shipping_method==='express'?'Express':'Standard'}</span><strong>{order.shipping_pence?`£${(order.shipping_pence/100).toFixed(2)}`:'FREE'}</strong><span style={{fontWeight:700,borderTop:'1px solid #eee',paddingTop:10}}>Total</span><strong style={{borderTop:'1px solid #eee',paddingTop:10}}>£{(order.total_pence/100).toFixed(2)}</strong></div>
         </section>
-        {!isCollection&&<section style={card}>
-          <h2 style={{margin:'0 0 6px',fontSize:19}}>Postage</h2><p style={{margin:'0 0 14px',color:'#60656b'}}>Customer selected <strong>{order.shipping_method==='express'?'Express':'Standard'}</strong> → <strong>{postageName}</strong>. Large Letter · {sheetCount} {sheetCount===1?'sheet':'sheets'} · estimated {mailWeight}g.</p>
-          {royalMail?<><div style={{background:'#eef8ef',border:'1px solid #cfe5d2',borderRadius:10,padding:14,marginBottom:12}}><strong>Royal Mail order created</strong><p style={{margin:'6px 0 0'}}>Reference: {royalMail.details?.order_reference||`EP-${number}`}{royalMail.details?.order_identifier?` · Royal Mail order ${royalMail.details.order_identifier}`:''}{royalMail.details?.tracking_number?` · ${royalMail.details.tracking_number}`:''}</p><p style={{margin:'5px 0 0'}}>Service: <strong>{postageName}</strong></p></div><div style={{display:'flex',gap:8,flexWrap:'wrap'}}><a className="btn" href="https://business.parcel.royalmail.com/orders" target="_blank" rel="noopener noreferrer">Pay / print label in Click & Drop</a><form action={`/api/admin/orders/${id}/cancel-royal-mail`} method="post"><button className="btn" type="submit" style={{borderColor:'#d6a4a4',color:'#8a2d2d'}}>Cancel Royal Mail order</button></form><form action={`/api/admin/orders/${id}/cancel-royal-mail`} method="post"><input type="hidden" name="force_clear" value="1"/><button className="btn" type="submit">Already deleted in Click & Drop? Clear from admin</button></form></div><p style={{fontSize:12,color:'#777',margin:'9px 0 0'}}>If the order was already deleted directly in Click & Drop, use “Clear from admin” to remove the stale Royal Mail link here and allow the postage order to be created again.</p></>:<form action={`/api/admin/orders/${id}/royal-mail`} method="post" style={{display:'grid',gap:10,maxWidth:430}}><input type="hidden" name="postage_service" value={defaultPostage}/><div style={{background:'#f7f8f6',border:'1px solid #e2e5df',borderRadius:10,padding:'11px 13px'}}><strong>{postageName}</strong><div style={{fontSize:13,color:'#687068',marginTop:3}}>Automatically selected from the customer's checkout choice.</div></div><button className="btn" type="submit" style={{justifySelf:'start'}}>Create Royal Mail order</button></form>}
-          {rmNotice&&<p style={{margin:'12px 0 0',fontWeight:600}}>{rmNotice}</p>}
-          {query?.rm==='failed'&&rmEvents?.[0]?.event_type==='royal_mail_order_failed'&&<p style={{margin:'6px 0 0',color:'#8a2d2d'}}>{rmEvents[0].details?.message||'Royal Mail returned an error.'}</p>}
+        {!isCollection&&<section style={{...card,padding:0,overflow:'hidden'}}>
+          <div style={{padding:'18px 20px',borderBottom:'1px solid #e8e8e3',display:'flex',justifyContent:'space-between',gap:12,alignItems:'center',flexWrap:'wrap'}}><div><h2 style={{margin:0,fontSize:19}}>Create shipping label</h2><p style={{margin:'4px 0 0',fontSize:13,color:'#6a6f68'}}>Everything is filled in from the order. Check it, then continue to Royal Mail.</p></div><span style={{fontSize:13,fontWeight:700,background:'#eef3ec',padding:'6px 9px',borderRadius:999}}>Large Letter</span></div>
+          <div style={{padding:20,display:'grid',gap:16}}>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(190px,1fr))',gap:12}}>
+              <div style={{background:'#f7f8f6',border:'1px solid #e3e5e0',borderRadius:11,padding:13}}><small style={{color:'#747972'}}>SHIP TO</small><div style={{marginTop:5,lineHeight:1.45}}><strong>{customerName}</strong>{addressLines.map((line,i)=><div key={i}>{line}</div>)}</div></div>
+              <div style={{background:'#f7f8f6',border:'1px solid #e3e5e0',borderRadius:11,padding:13}}><small style={{color:'#747972'}}>PACKAGE</small><div style={{marginTop:5}}><strong>32 × 23 cm Large Letter</strong><div>{sheetCount} {sheetCount===1?'sheet':'sheets'} · {mailWeight}g</div></div></div>
+              <div style={{background:'#f7f8f6',border:'1px solid #e3e5e0',borderRadius:11,padding:13}}><small style={{color:'#747972'}}>CUSTOMER PAID</small><div style={{marginTop:5}}><strong>{order.shipping_method==='express'?'Express':'Standard'}</strong><div>{order.shipping_pence?\`£\${(order.shipping_pence/100).toFixed(2)}\`:'FREE'}</div></div></div>
+            </div>
+            {royalMail?<>
+              <div style={{border:'1px solid #cfe5d2',borderRadius:12,overflow:'hidden'}}>
+                <div style={{background:'#eef8ef',padding:'13px 15px'}}><strong>Ready in Royal Mail Click & Drop</strong><div style={{fontSize:13,marginTop:3}}>Reference {royalMail.details?.order_reference||\`EP-\${number}\`} · {postageName} · {mailWeight}g</div></div>
+                <div style={{padding:15,display:'grid',gridTemplateColumns:'1fr auto',gap:14,alignItems:'center'}}><div><strong>Next: buy and print the label</strong><div style={{fontSize:13,color:'#687068',marginTop:3}}>The address, parcel and service are already on the Royal Mail order.</div></div><a className="btn" href="https://business.parcel.royalmail.com/orders" target="_blank" rel="noopener noreferrer">Open Royal Mail to pay & print</a></div>
+              </div>
+              <details><summary style={{cursor:'pointer',fontSize:13,color:'#666'}}>Royal Mail order options</summary><div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:10}}><form action={\`/api/admin/orders/\${id}/cancel-royal-mail\`} method="post"><button className="btn" type="submit" style={{borderColor:'#d6a4a4',color:'#8a2d2d',background:'#fff'}}>Cancel Royal Mail order</button></form><form action={\`/api/admin/orders/\${id}/cancel-royal-mail\`} method="post"><input type="hidden" name="force_clear" value="1"/><button className="btn" type="submit" style={{background:'#fff',color:'#555',borderColor:'#ccc'}}>Clear from admin</button></form></div></details>
+            </>:<>
+              <div style={{border:'1px solid #dfe3dc',borderRadius:12,padding:15,display:'grid',gridTemplateColumns:'1fr auto',gap:14,alignItems:'center'}}>
+                <div><small style={{color:'#747972'}}>SHIPPING SERVICE</small><div style={{fontSize:17,fontWeight:700,marginTop:3}}>{postageName}</div><div style={{fontSize:13,color:'#687068',marginTop:2}}>Automatically selected from the customer's checkout choice.</div></div><span style={{fontSize:12,fontWeight:700,background:'#eaf4ff',color:'#376482',padding:'5px 8px',borderRadius:999}}>Selected</span>
+              </div>
+              <form action={\`/api/admin/orders/\${id}/royal-mail\`} method="post" style={{display:'flex',justifyContent:'flex-end'}}><input type="hidden" name="postage_service" value={defaultPostage}/><button className="btn" type="submit" style={{minWidth:220}}>Continue to Royal Mail</button></form>
+            </>}
+            {rmNotice&&<p style={{margin:0,fontWeight:600}}>{rmNotice}</p>}
+            {query?.rm==='failed'&&rmEvents?.[0]?.event_type==='royal_mail_order_failed'&&<p style={{margin:0,color:'#8a2d2d'}}>{rmEvents[0].details?.message||'Royal Mail returned an error.'}</p>}
+          </div>
         </section>}
         <section style={{...card,padding:0,overflow:'hidden'}}>
           <div style={{padding:'18px 20px',borderBottom:'1px solid #eee'}}><h2 style={{margin:0,fontSize:19}}>Timeline</h2></div>
