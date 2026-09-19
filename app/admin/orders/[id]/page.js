@@ -48,7 +48,7 @@ async function remoteOrderExists(details={}){
   const reference=String(details.order_reference||'').trim();
   const identifier=String(details.order_identifier||'').trim();
   if(!apiKey||(!reference&&!identifier))return true;
-  const token=reference?encodeURIComponent(reference):identifier;
+  const token=identifier||encodeURIComponent(reference);
   try{
     const response=await fetch(`${CLICK_DROP_ORDERS}/${token}`,{headers:{Authorization:apiKey},cache:'no-store'});
     if(response.status===404)return false;
