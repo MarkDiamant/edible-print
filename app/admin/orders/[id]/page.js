@@ -3,6 +3,7 @@ import {notFound,redirect} from 'next/navigation';
 import {isAdminValue} from '../../../../lib/adminAuth';
 import {getSupabaseAdmin} from '../../../../lib/supabaseAdmin';
 import {formatOrderNumber} from '../../../../lib/orderNumber';
+import SheetCountSelect from './SheetCountSelect';
 
 export const dynamic='force-dynamic';
 const CLICK_DROP_ORDERS='https://api.parcel.royalmail.com/api/v1/orders';
@@ -103,7 +104,9 @@ export default async function OrderDetail({params,searchParams}){
   const isCollection=order.shipping_method==='collection';
   const fulfilledLabel=isCollection?'Collected':'Dispatched';
   const sheetCount=Math.max(1,(items||[]).reduce((n,x)=>n+(Number(x.quantity)||0),0));
-  const mailWeight=83+Math.max(0,sheetCount-1)*30;
+  const requestedSheets=Number(query?.sheets);
+  const packageSheets=Number.isInteger(requestedSheets)&&requestedSheets>=1&&requestedSheets<=23?requestedSheets:sheetCount;
+  const mailWeight=83+Math.max(0,packageSheets-1)*30;
   const defaultPostage=order.shipping_method==='express'?'express':'standard';
   const postageName=defaultPostage==='express'?'Tracked 24 Large Letter':'Tracked 48 Large Letter';
   const postagePrice=defaultPostage==='express'?3.80:2.85;
@@ -139,7 +142,7 @@ export default async function OrderDetail({params,searchParams}){
           <div style={{padding:20,display:'grid',gap:16}}>
             <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(190px,1fr))',gap:12}}>
               <div style={{background:'#f7f8f6',border:'1px solid #e3e5e0',borderRadius:11,padding:13}}><small style={{color:'#747972'}}>SHIP TO</small><div style={{marginTop:5,lineHeight:1.45}}><strong>{customerName}</strong>{addressLines.map((line,i)=><div key={i}>{line}</div>)}</div></div>
-              <div style={{background:'#f7f8f6',border:'1px solid #e3e5e0',borderRadius:11,padding:13}}><small style={{color:'#747972'}}>PACKAGE</small><div style={{marginTop:5}}><strong>32 × 23 cm Large Letter</strong><div>{sheetCount} {sheetCount===1?'sheet':'sheets'} · {mailWeight}g</div><div style={{fontSize:12,color:'#687068',marginTop:4}}>Choose the actual number of sheets below if the parcel differs from the order quantity.</div></div></div>
+              <div style={{background:'#f7f8f6',border:'1px solid #e3e5e0',borderRadius:11,padding:13}}><small style={{color:'#747972'}}>PACKAGE</small><div style={{marginTop:5}}><strong>32 × 23 cm Large Letter</strong><div>{packageSheets} {packageSheets===1?'sheet':'sheets'} · {mailWeight}g</div><div style={{fontSize:12,color:'#687068',marginTop:4}}>Choose the actual number of sheets below if the parcel differs from the order quantity.</div></div></div>
               <div style={{background:'#f7f8f6',border:'1px solid #e3e5e0',borderRadius:11,padding:13}}><small style={{color:'#747972'}}>CUSTOMER PAID</small><div style={{marginTop:5}}><strong>{order.shipping_method==='express'?'Express':'Standard'}</strong><div>{order.shipping_pence?`£${(order.shipping_pence/100).toFixed(2)}`:'FREE'}</div></div></div>
             </div>
             {royalMail?<>
@@ -152,7 +155,7 @@ export default async function OrderDetail({params,searchParams}){
               <div style={{border:'1px solid #dfe3dc',borderRadius:12,padding:15,display:'grid',gridTemplateColumns:'1fr auto',gap:14,alignItems:'center'}}>
                 <div><small style={{color:'#747972'}}>SHIPPING SERVICE</small><div style={{fontSize:17,fontWeight:700,marginTop:3}}>{postageName}</div><div style={{fontSize:18,fontWeight:800,marginTop:4}}>Royal Mail online price: £{postagePrice.toFixed(2)}</div><div style={{fontSize:13,color:'#687068',marginTop:2}}>Automatically selected from the customer's checkout choice. Price shown is Royal Mail's current online Large Letter price.</div></div><span style={{fontSize:12,fontWeight:700,background:'#eaf4ff',color:'#376482',padding:'5px 8px',borderRadius:999}}>Selected</span>
               </div>
-              <form action={`/api/admin/orders/${id}/royal-mail?v=3`} method="post" style={{display:'flex',justifyContent:'flex-end',alignItems:'end',gap:12,flexWrap:'wrap'}}><input type="hidden" name="postage_service" value={defaultPostage}/><label style={{display:'grid',gap:5,fontSize:13,fontWeight:700}}>Package sheets<select name="sheet_count" defaultValue={String(sheetCount)} style={{minWidth:220,padding:'13px 14px',border:'2px solid #aaa',borderRadius:9,background:'#fff',fontSize:18,fontWeight:800}}>{Array.from({length:23},(_,i)=>i+1).map(n=><option key={n} value={n}>{n} {n===1?'sheet':'sheets'} · {83+(n-1)*30}g</option>)}</select></label><button className="btn" type="submit" style={{minWidth:220}}>Continue to Royal Mail</button></form>
+              <form action={`/api/admin/orders/${id}/royal-mail?v=3`} method="post" style={{display:'flex',justifyContent:'flex-end',alignItems:'end',gap:12,flexWrap:'wrap'}}><input type="hidden" name="postage_service" value={defaultPostage}/><label style={{display:'grid',gap:5,fontSize:13,fontWeight:700}}>Package sheets<select name="sheet_count" value={String(packageSheets)} style={{display:'none'}}></select><SheetCountSelect value={packageSheets}/></label><button className="btn" type="submit" style={{minWidth:220}}>Continue to Royal Mail</button></form>
             </>}
             {rmNotice&&<p style={{margin:0,fontWeight:600}}>{rmNotice}</p>}
             {query?.rm==='failed'&&rmEvents?.[0]?.event_type==='royal_mail_order_failed'&&<p style={{margin:0,color:'#8a2d2d'}}>{rmEvents[0].details?.message||'Royal Mail returned an error.'}</p>}
