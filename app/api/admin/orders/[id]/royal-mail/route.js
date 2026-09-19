@@ -61,6 +61,7 @@ export async function POST(req,{params}){
   const form=await req.formData().catch(()=>null);
   const requested=clean(form?.get('postage_service')).toLowerCase();
   const postageChoice=['standard','express'].includes(requested)?requested:(order.shipping_method==='express'?'express':'standard');
+  const requestedSheetCount=Number(form?.get('sheet_count'));
 
   const apiKey=process.env.ROYAL_MAIL_CLICK_DROP_API_KEY;
   if(!apiKey)return NextResponse.redirect(new URL(`/admin/orders/${id}?rm=config`,req.url),303);
@@ -86,7 +87,8 @@ export async function POST(req,{params}){
 
   const {data:items,error:itemError}=await db.from('order_items').select('quantity').eq('order_id',id);
   if(itemError)return NextResponse.redirect(new URL(`/admin/orders/${id}?rm=failed`,req.url),303);
-  const sheetCount=Math.max(1,(items||[]).reduce((n,x)=>n+(Number(x.quantity)||0),0));
+  const orderSheetCount=Math.max(1,(items||[]).reduce((n,x)=>n+(Number(x.quantity)||0),0));
+  const sheetCount=Number.isInteger(requestedSheetCount)&&requestedSheetCount>=1&&requestedSheetCount<=23?requestedSheetCount:orderSheetCount;
   const weightInGrams=83+Math.max(0,sheetCount-1)*30;
   if(weightInGrams>750){
     await db.from('order_events').insert({order_id:id,event_type:'royal_mail_order_failed',actor:'admin',details:{message:'Calculated Large Letter weight exceeds 750g',sheet_count:sheetCount,weight_grams:weightInGrams,postage_choice:postageChoice}});
