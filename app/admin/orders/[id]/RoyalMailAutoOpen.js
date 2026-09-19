@@ -4,9 +4,7 @@ import {useEffect} from 'react';
 export default function RoyalMailAutoOpen({enabled}){
   useEffect(()=>{
     if(!enabled)return;
-    const url='https://business.parcel.royalmail.com/orders/';
-    const timer=setTimeout(()=>{ window.location.assign(url); },150);
-    return ()=>clearTimeout(timer);
+    window.open('https://business.parcel.royalmail.com/orders/','_blank','noopener,noreferrer');
   },[enabled]);
   return null;
 }
