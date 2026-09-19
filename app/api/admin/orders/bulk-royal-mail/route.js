@@ -9,7 +9,7 @@ const CLICK_DROP_URL='https://business.parcel.royalmail.com/orders';
 
 function clean(v){return String(v||'').trim()}
 function serviceCode(choice){
-  return choice==='express'?clean(process.env.ROYAL_MAIL_EXPRESS_SERVICE_CODE):clean(process.env.ROYAL_MAIL_STANDARD_SERVICE_CODE);
+  return choice==='express'?(clean(process.env.ROYAL_MAIL_EXPRESS_SERVICE_CODE)||'TOLP24'):(clean(process.env.ROYAL_MAIL_STANDARD_SERVICE_CODE)||'TOLP48');
 }
 async function remoteOrderExists(apiKey,details={}){
   const reference=clean(details.order_reference);
