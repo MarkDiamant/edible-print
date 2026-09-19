@@ -1,3 +1,4 @@
+import RoyalMailAutoOpen from './RoyalMailAutoOpen';
 import {cookies} from 'next/headers';
 import {notFound,redirect} from 'next/navigation';
 import {isAdminValue} from '../../../../lib/adminAuth';
