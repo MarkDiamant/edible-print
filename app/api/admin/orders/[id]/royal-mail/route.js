@@ -8,8 +8,7 @@ const CLICK_DROP_ORDERS='https://api.parcel.royalmail.com/api/v1/Orders';
 
 function clean(v){return String(v||'').trim()}
 function serviceCode(choice){
-  if(choice==='express')return clean(process.env.ROYAL_MAIL_EXPRESS_SERVICE_CODE)||'TPN24';
-  return clean(process.env.ROYAL_MAIL_STANDARD_SERVICE_CODE)||'TPS48';
+  return choice==='express'?clean(process.env.ROYAL_MAIL_EXPRESS_SERVICE_CODE):clean(process.env.ROYAL_MAIL_STANDARD_SERVICE_CODE);
 }
 function normaliseCreated(result,orderRef){
   const candidates=[];
@@ -124,7 +123,7 @@ export async function POST(req,{params}){
       packageFormatIdentifier:'largeLetter',
       dimensions:{heightInMms:230,widthInMms:320,depthInMms:19}
     }],
-    postageDetails:{serviceCode:code},
+    ...(code?{postageDetails:{serviceCode:code}}:{}),
     shippingCostCharged:Number(order.shipping_pence||0)/100,
     subtotal:Number(order.subtotal_pence||0)/100,
     total:Number(order.total_pence||0)/100,
