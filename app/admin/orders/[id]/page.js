@@ -88,11 +88,11 @@ export default async function OrderDetail({params,searchParams}){
   let royalMail=latestRmState?.event_type==='royal_mail_order_created'?latestRmState:null;
   let syncedDeletedEvent=null;
   const royalMailAge=royalMail?.created_at?Date.now()-new Date(royalMail.created_at).getTime():Infinity;
-  if(royalMail&&royalMailAge>120000&&!(await remoteOrderExists(royalMail.details||{}))){
+  if(royalMail&&royalMailAge>120000){const exists=await remoteOrderExists(royalMail.details||{});if(!exists){
     syncedDeletedEvent={event_type:'royal_mail_order_deleted',actor:'sync',created_at:new Date().toISOString(),details:{...(royalMail.details||{}),message:'Order no longer exists in Click & Drop'}};
     await db.from('order_events').insert({order_id:id,event_type:'royal_mail_order_deleted',actor:'sync',details:syncedDeletedEvent.details});
     royalMail=null;
-  }
+  }}
   const customerMessage=messages?.[0]?.details?.message||'';
   console.log('Admin order linked data',{id,artwork:(artwork||[]).map(a=>({id:a.id,order_item_id:a.order_item_id,draft_item_id:a.draft_item_id,filename:a.original_filename})),customerMessage,instructionEvents:(instructionEvents||[]).map(e=>e.details)});
   const instructionMap=new Map(instructionEvents.map(e=>[e.details?.source_draft_item_id,parseArtworkInstructions(e.details?.instructions||'')]));
