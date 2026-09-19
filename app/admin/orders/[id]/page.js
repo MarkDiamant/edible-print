@@ -73,6 +73,7 @@ export default async function OrderDetail({params,searchParams}){
   if(!order)notFound();
   const {data:items}=await db.from('order_items').select('*').eq('order_id',id).order('created_at');
   console.log('Admin order detail',{id,cart_id:order.cart_id,items:(items||[]).map(x=>({id:x.id,source_draft_item_id:x.source_draft_item_id,product_title:x.product_title}))});
+  const sourceIds=(items||[]).map(x=>x.source_draft_item_id).filter(Boolean);let draftInstructions=[];if(sourceIds.length){const {data}=await db.from('draft_cart_items').select('*').in('id',sourceIds);draftInstructions=data||[];console.log('Admin source draft instructions',draftInstructions.map(x=>({id:x.id,instructions:x.instructions,print_instructions:x.print_instructions}))) }
   const {data:orderArtwork}=await db.from('artwork').select('id,order_item_id,draft_item_id,object_path,original_filename,mime_type,size_bytes,created_at').eq('order_id',id).order('created_at');
   let artwork=orderArtwork||[];
   if(order.cart_id){
