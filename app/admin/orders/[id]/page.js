@@ -54,6 +54,7 @@ async function remoteOrderExists(details={}){
     if(response.status===404)return false;
     if(!response.ok)return true;
     const result=await response.json().catch(()=>null);
+    console.log('Click & Drop existing order details',{reference,identifier,result});
     if(Array.isArray(result))return result.length>0;
     if(Array.isArray(result?.orders))return result.orders.length>0;
     return Boolean(result);
