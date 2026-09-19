@@ -60,7 +60,7 @@ async function createOrder({db,cartId,items,delivery,email,phone,fullName,addres
     if(instructionText)await db.from('order_events').insert({order_id:order.id,event_type:'artwork_instructions',actor:'customer',details:{source_draft_item_id:item.id,product_title:item.product_title,instructions:instructionText.slice(0,4000)}});
   }
   const note=String(customerMessage||'').trim();
-  if(note)await db.from('order_events').insert({order_id:order.id,event_type:'customer_message',actor:'customer',details:{message:note.slice(0,450)}});
+  if(note){const {error:noteError}=await db.from('order_events').insert({order_id:order.id,event_type:'customer_message',actor:'customer',details:{message:note.slice(0,450)}});if(noteError)throw noteError;}
   return order.id;
 }
 
