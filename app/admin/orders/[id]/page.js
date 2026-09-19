@@ -70,7 +70,13 @@ export default async function OrderDetail({params,searchParams}){
   const {data:order}=await db.from('orders').select('*').eq('id',id).maybeSingle();
   if(!order)notFound();
   const {data:items}=await db.from('order_items').select('*').eq('order_id',id).order('created_at');
-  const {data:artwork}=await db.from('artwork').select('id,order_item_id,object_path,original_filename,mime_type,size_bytes').eq('order_id',id).order('created_at');
+  const {data:orderArtwork}=await db.from('artwork').select('id,order_item_id,draft_item_id,object_path,original_filename,mime_type,size_bytes,created_at').eq('order_id',id).order('created_at');
+  let artwork=orderArtwork||[];
+  if(order.cart_id){
+    const {data:cartArtwork}=await db.from('artwork').select('id,order_item_id,draft_item_id,object_path,original_filename,mime_type,size_bytes,created_at').eq('cart_id',order.cart_id).order('created_at');
+    const seen=new Set(artwork.map(a=>a.id));
+    artwork=[...artwork,...(cartArtwork||[]).filter(a=>!seen.has(a.id))];
+  }
   const {data:events}=await db.from('order_events').select('event_type,details,created_at').eq('order_id',id).order('created_at',{ascending:false});
   const messages=(events||[]).filter(e=>e.event_type==='customer_message');
   const instructionEvents=(events||[]).filter(e=>e.event_type==='artwork_instructions');
@@ -78,7 +84,8 @@ export default async function OrderDetail({params,searchParams}){
   const latestRmState=(events||[]).find(e=>['royal_mail_order_created','royal_mail_order_deleted'].includes(e.event_type));
   let royalMail=latestRmState?.event_type==='royal_mail_order_created'?latestRmState:null;
   let syncedDeletedEvent=null;
-  if(royalMail&&!(await remoteOrderExists(royalMail.details||{}))){
+  const royalMailAge=royalMail?.created_at?Date.now()-new Date(royalMail.created_at).getTime():Infinity;
+  if(royalMail&&royalMailAge>120000&&!(await remoteOrderExists(royalMail.details||{}))){
     syncedDeletedEvent={event_type:'royal_mail_order_deleted',actor:'sync',created_at:new Date().toISOString(),details:{...(royalMail.details||{}),message:'Order no longer exists in Click & Drop'}};
     await db.from('order_events').insert({order_id:id,event_type:'royal_mail_order_deleted',actor:'sync',details:syncedDeletedEvent.details});
     royalMail=null;
@@ -99,6 +106,7 @@ export default async function OrderDetail({params,searchParams}){
   const mailWeight=83+Math.max(0,sheetCount-1)*30;
   const defaultPostage=order.shipping_method==='express'?'express':'standard';
   const postageName=defaultPostage==='express'?'Tracked 24 Large Letter':'Tracked 48 Large Letter';
+  const postagePrice=defaultPostage==='express'?3.80:2.85;
   const number=formatOrderNumber(order.order_number);
   const timeline=[...(syncedDeletedEvent?[syncedDeletedEvent]:[]),...(events||[])].map(e=>({...e,label:eventLabel(e)})).filter(e=>e.label);
   const rmNotice=query?.rm==='created'?'Royal Mail order created successfully.':query?.rm==='exists'?'This order already exists in Click & Drop.':query?.rm==='deleted'?'Royal Mail order cancelled/deleted successfully.':query?.rm==='delete-failed'?'Royal Mail could not cancel this stored link. If you already deleted the order in Click & Drop, use “Clear from admin” below.':query?.rm==='failed'?'Royal Mail could not accept the order. Check the latest error below and try again.':query?.rm==='config'?'Click & Drop API key is not configured.':query?.rm==='weight'?'This order is over the 750g Large Letter limit and needs manual postage setup.':'';
@@ -119,7 +127,7 @@ export default async function OrderDetail({params,searchParams}){
       <div style={{display:'grid',gap:18}}>
         <section style={card}>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,flexWrap:'wrap',marginBottom:14}}><h2 style={{margin:0,fontSize:19}}>{order.fulfilment_status==='fulfilled'?fulfilledLabel:'Fulfilment'}</h2><div style={{display:'flex',gap:8,flexWrap:'wrap'}}>{['processing','ready','fulfilled'].map(action=><form key={action} action={`/api/admin/orders/${id}/status`} method="post"><input type="hidden" name="action" value={action}/><button className="btn" type="submit">{action==='processing'?'Mark processing':action==='ready'?(isCollection?'Ready for collection':'Mark ready'):(isCollection?'Mark collected':'Mark dispatched')}</button></form>)}</div></div>
-          {(items||[]).map(item=>{const itemInstructions=instructionMap.get(item.source_draft_item_id)||[];return <div key={item.id} style={{borderTop:'1px solid #ecece8',padding:'16px 0'}}><div style={{display:'flex',justifyContent:'space-between',gap:14}}><div><strong>{item.product_title}</strong><div style={{color:'#666',fontSize:14,marginTop:3}}>{item.variant_label} · Qty {item.quantity}</div></div><strong>£{((item.unit_price_pence*item.quantity)/100).toFixed(2)}</strong></div>{signed.filter(a=>a.order_item_id===item.id).map((a,index)=>{const matched=itemInstructions.find(x=>x.filename===a.original_filename)||itemInstructions[index];return <div key={a.id} style={{marginTop:12,paddingTop:12,borderTop:'1px dashed #ddd'}}><p style={{margin:'0 0 6px'}}><strong>Image {index+1}:</strong> <a href={a.url||'#'}>{a.original_filename}</a> <small>({Math.round(a.size_bytes/1024)} KB)</small></p><div style={{fontSize:14,color:'#4e4e4b'}}><strong>Instructions:</strong> {matched?.instruction||'No specific instructions'}</div></div>})}</div>})}
+          {(items||[]).map(item=>{const itemInstructions=instructionMap.get(item.source_draft_item_id)||[];return <div key={item.id} style={{borderTop:'1px solid #ecece8',padding:'16px 0'}}><div style={{display:'flex',justifyContent:'space-between',gap:14}}><div><strong>{item.product_title}</strong><div style={{color:'#666',fontSize:14,marginTop:3}}>{item.variant_label} · Qty {item.quantity}</div></div><strong>£{((item.unit_price_pence*item.quantity)/100).toFixed(2)}</strong></div>{signed.filter(a=>a.order_item_id===item.id||(!a.order_item_id&&a.draft_item_id===item.source_draft_item_id)).map((a,index)=>{const matched=itemInstructions.find(x=>x.filename===a.original_filename)||itemInstructions[index];return <div key={a.id} style={{marginTop:12,paddingTop:12,borderTop:'1px dashed #ddd'}}><p style={{margin:'0 0 6px'}}><strong>Image {index+1}:</strong> <a href={a.url||'#'}>{a.original_filename}</a> <small>({Math.round(a.size_bytes/1024)} KB)</small></p><div style={{fontSize:14,color:'#4e4e4b'}}><strong>Instructions:</strong> {matched?.instruction||'No specific instructions'}</div></div>})}</div>})}
           <p style={{fontSize:13,color:'#777',margin:'8px 0 0'}}>Artwork download links are secure for 5 minutes. Refresh the page for fresh links.</p>
         </section>
         <section style={card}>
@@ -142,7 +150,7 @@ export default async function OrderDetail({params,searchParams}){
               <details><summary style={{cursor:'pointer',fontSize:13,color:'#666'}}>Royal Mail order options</summary><div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:10}}><form action={`/api/admin/orders/${id}/cancel-royal-mail`} method="post"><button className="btn" type="submit" style={{borderColor:'#d6a4a4',color:'#8a2d2d',background:'#fff'}}>Cancel Royal Mail order</button></form><form action={`/api/admin/orders/${id}/cancel-royal-mail`} method="post"><input type="hidden" name="force_clear" value="1"/><button className="btn" type="submit" style={{background:'#fff',color:'#555',borderColor:'#ccc'}}>Clear from admin</button></form></div></details>
             </>:<>
               <div style={{border:'1px solid #dfe3dc',borderRadius:12,padding:15,display:'grid',gridTemplateColumns:'1fr auto',gap:14,alignItems:'center'}}>
-                <div><small style={{color:'#747972'}}>SHIPPING SERVICE</small><div style={{fontSize:17,fontWeight:700,marginTop:3}}>{postageName}</div><div style={{fontSize:13,color:'#687068',marginTop:2}}>Automatically selected from the customer's checkout choice.</div></div><span style={{fontSize:12,fontWeight:700,background:'#eaf4ff',color:'#376482',padding:'5px 8px',borderRadius:999}}>Selected</span>
+                <div><small style={{color:'#747972'}}>SHIPPING SERVICE</small><div style={{fontSize:17,fontWeight:700,marginTop:3}}>{postageName}</div><div style={{fontSize:18,fontWeight:800,marginTop:4}}>Royal Mail online price: £{postagePrice.toFixed(2)}</div><div style={{fontSize:13,color:'#687068',marginTop:2}}>Automatically selected from the customer's checkout choice. Price shown is Royal Mail's current online Large Letter price.</div></div><span style={{fontSize:12,fontWeight:700,background:'#eaf4ff',color:'#376482',padding:'5px 8px',borderRadius:999}}>Selected</span>
               </div>
               <form action={`/api/admin/orders/${id}/royal-mail?v=3`} method="post" style={{display:'flex',justifyContent:'flex-end',alignItems:'end',gap:12,flexWrap:'wrap'}}><input type="hidden" name="postage_service" value={defaultPostage}/><label style={{display:'grid',gap:5,fontSize:13,fontWeight:700}}>Package sheets<select name="sheet_count" defaultValue={String(sheetCount)} style={{minWidth:220,padding:'13px 14px',border:'2px solid #aaa',borderRadius:9,background:'#fff',fontSize:18,fontWeight:800}}>{Array.from({length:23},(_,i)=>i+1).map(n=><option key={n} value={n}>{n} {n===1?'sheet':'sheets'} · {83+(n-1)*30}g</option>)}</select></label><button className="btn" type="submit" style={{minWidth:220}}>Continue to Royal Mail</button></form>
             </>}
