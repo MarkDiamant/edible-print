@@ -71,6 +71,7 @@ export default async function OrderDetail({params,searchParams}){
   const {data:order}=await db.from('orders').select('*').eq('id',id).maybeSingle();
   if(!order)notFound();
   const {data:items}=await db.from('order_items').select('*').eq('order_id',id).order('created_at');
+  console.log('Admin order detail',{id,cart_id:order.cart_id,items:(items||[]).map(x=>({id:x.id,source_draft_item_id:x.source_draft_item_id,product_title:x.product_title}))});
   const {data:orderArtwork}=await db.from('artwork').select('id,order_item_id,draft_item_id,object_path,original_filename,mime_type,size_bytes,created_at').eq('order_id',id).order('created_at');
   let artwork=orderArtwork||[];
   if(order.cart_id){
@@ -92,6 +93,7 @@ export default async function OrderDetail({params,searchParams}){
     royalMail=null;
   }
   const customerMessage=messages?.[0]?.details?.message||'';
+  console.log('Admin order linked data',{id,artwork:(artwork||[]).map(a=>({id:a.id,order_item_id:a.order_item_id,draft_item_id:a.draft_item_id,filename:a.original_filename})),customerMessage,instructionEvents:(instructionEvents||[]).map(e=>e.details)});
   const instructionMap=new Map(instructionEvents.map(e=>[e.details?.source_draft_item_id,parseArtworkInstructions(e.details?.instructions||'')]));
   const signed=[];
   for(const a of artwork||[]){
