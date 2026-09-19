@@ -20,12 +20,14 @@ function normaliseCreated(result,orderRef){
   return candidates.find(x=>clean(x?.orderReference)===orderRef)||candidates[0]||null;
 }
 function createWasAccepted(result,orderRef){
-  if(!result||typeof result!=='object')return false;
-  if(Number(result?.errorsCount||0)>0)return false;
-  if(Array.isArray(result?.failedOrders)&&result.failedOrders.length)return false;
-  if(normaliseCreated(result,orderRef))return true;
-  const createdCount=Number(result?.createdOrdersCount??result?.ordersCreated??result?.successCount??0);
-  return Number.isFinite(createdCount)&&createdCount>0;
+  // Click & Drop's create endpoint can return HTTP 200 with an empty/minimal body.
+  // Explicit Royal Mail errors still fail; otherwise the HTTP success is authoritative.
+  if(result&&typeof result==='object'){
+    if(Number(result?.errorsCount||0)>0)return false;
+    if(Array.isArray(result?.failedOrders)&&result.failedOrders.length)return false;
+    if(Array.isArray(result?.errors)&&result.errors.length)return false;
+  }
+  return true;
 }
 async function fetchByReference(apiKey,orderRef){
   // Royal Mail's GET-by-reference endpoint expects the reference as a normal
