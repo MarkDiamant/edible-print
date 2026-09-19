@@ -9,8 +9,7 @@ const CLICK_DROP_URL='https://business.parcel.royalmail.com/orders';
 
 function clean(v){return String(v||'').trim()}
 function serviceCode(choice){
-  if(choice==='express')return clean(process.env.ROYAL_MAIL_EXPRESS_SERVICE_CODE)||'TPN24';
-  return clean(process.env.ROYAL_MAIL_STANDARD_SERVICE_CODE)||'TPS48';
+  return choice==='express'?clean(process.env.ROYAL_MAIL_EXPRESS_SERVICE_CODE):clean(process.env.ROYAL_MAIL_STANDARD_SERVICE_CODE);
 }
 async function remoteOrderExists(apiKey,details={}){
   const reference=clean(details.order_reference);
@@ -81,7 +80,7 @@ export async function POST(req){
       orderDate:order.created_at||new Date().toISOString(),
       recipient:{address:{fullName:`${clean(order.first_name)} ${clean(order.last_name)}`.trim()||'Customer',addressLine1:clean(a.line1),addressLine2:clean(a.line2),addressLine3:'',city:clean(a.city),county:clean(a.state),postcode:clean(a.postal_code).toUpperCase(),countryCode:clean(a.country)||'GB'},phoneNumber:clean(order.phone),emailAddress:clean(order.email)},
       packages:[{weightInGrams,packageFormatIdentifier:'largeLetter',dimensions:{heightInMms:230,widthInMms:320,depthInMms:19}}],
-      postageDetails:{serviceCode:code},
+      ...(code?{postageDetails:{serviceCode:code}}:{}),
       shippingCostCharged:Number(order.shipping_pence||0)/100,
       subtotal:Number(order.subtotal_pence||0)/100,
       total:Number(order.total_pence||0)/100,
