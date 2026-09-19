@@ -133,7 +133,9 @@ export async function POST(req,{params}){
 
   try{
     const response=await fetch(CLICK_DROP_ORDERS,{method:'POST',headers:{Authorization:apiKey,'Content-Type':'application/json'},body:JSON.stringify(payload),cache:'no-store'});
-    const result=await response.json().catch(()=>({}));
+    const raw=await response.text();
+    let result={};try{result=raw?JSON.parse(raw):{}}catch{result={raw}}
+    console.log('Click & Drop create response',{status:response.status,orderRef,body:raw.slice(0,1500)});
     let created=normaliseCreated(result,orderRef);
 
     // Click & Drop sometimes returns HTTP 200 without the older createdOrders envelope.
