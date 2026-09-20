@@ -44,6 +44,15 @@ function eventTime(value){
   try{return new Date(value).toLocaleString('en-GB',{timeZone:'Europe/London',day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}catch{return ''}
 }
 
+async function fetchRemoteOrder(details={}){
+  const apiKey=process.env.ROYAL_MAIL_CLICK_DROP_API_KEY;
+  const reference=String(details.order_reference||'').trim();
+  const identifier=String(details.order_identifier||'').trim();
+  if(!apiKey||(!reference&&!identifier))return null;
+  const token=identifier||encodeURIComponent(reference);
+  try{const response=await fetch(`${CLICK_DROP_ORDERS}/${token}`,{headers:{Authorization:apiKey},cache:'no-store'});if(!response.ok)return null;const result=await response.json().catch(()=>null);if(Array.isArray(result))return result[0]||null;if(Array.isArray(result?.orders))return result.orders[0]||null;return result&&typeof result==='object'?result:null}catch{return null}
+}
+
 async function remoteOrderExists(details={}){
   const apiKey=process.env.ROYAL_MAIL_CLICK_DROP_API_KEY;
   const reference=String(details.order_reference||'').trim();
@@ -95,6 +104,10 @@ export default async function OrderDetail({params,searchParams}){
     await db.from('order_events').insert({order_id:id,event_type:'royal_mail_order_deleted',actor:'sync',details:syncedDeletedEvent.details});
     royalMail=null;
   }}
+  const remoteRoyalMail=royalMail?await fetchRemoteOrder(royalMail.details||{}):null;
+  const remotePackage=remoteRoyalMail?.packages?.[0]||{};
+  const trackingNumber=remoteRoyalMail?.trackingNumber||remotePackage?.trackingNumber||royalMail?.details?.tracking_number||'';
+  const trackingStatus=remoteRoyalMail?.trackingStatus||remoteRoyalMail?.status||remotePackage?.trackingStatus||remotePackage?.status||'';
   const customerMessage=messages?.[0]?.details?.message||'';
   console.log('Admin order linked data',{id,artwork:(artwork||[]).map(a=>({id:a.id,order_item_id:a.order_item_id,draft_item_id:a.draft_item_id,filename:a.original_filename})),customerMessage,instructionEvents:(instructionEvents||[]).map(e=>e.details)});
   const instructionMap=new Map(instructionEvents.map(e=>[e.details?.source_draft_item_id,parseArtworkInstructions(e.details?.instructions||'')]));
@@ -153,7 +166,7 @@ export default async function OrderDetail({params,searchParams}){
             <div style={{border:'1px solid #dfe3dc',borderRadius:12,padding:15,display:'flex',justifyContent:'space-between',alignItems:'end',gap:14,flexWrap:'wrap'}}><div><strong>Package weight</strong><div style={{fontSize:13,color:'#687068',marginTop:3}}>Adjust this if the actual parcel has a different number of sheets.</div></div><label style={{display:'grid',gap:5,fontSize:13,fontWeight:700}}>Package sheets<SheetCountSelect value={packageSheets}/></label></div>
             {royalMail?<>
               <div style={{border:'1px solid #cfe5d2',borderRadius:12,overflow:'hidden'}}>
-                <div style={{background:'#eef8ef',padding:'13px 15px'}}><strong>Ready in Royal Mail Click & Drop</strong><div style={{fontSize:13,marginTop:3}}>Reference {royalMail.details?.order_reference||`EP-${number}`} · {postageName} · {mailWeight}g</div></div>
+                <div style={{background:'#eef8ef',padding:'13px 15px'}}><strong>Ready in Royal Mail Click & Drop</strong><div style={{fontSize:13,marginTop:3}}>Reference {royalMail.details?.order_reference||`EP-${number}`} · {postageName} · {mailWeight}g</div>{trackingNumber&&<div style={{fontSize:13,marginTop:4}}><strong>Tracking:</strong> {trackingNumber}{trackingStatus?` · ${trackingStatus}`:''}</div>}</div>
                 <div style={{padding:15,display:'grid',gridTemplateColumns:'1fr auto',gap:14,alignItems:'center'}}><div><strong>Postage applied. Next: open Royal Mail to pay and print</strong><div style={{fontSize:13,color:'#687068',marginTop:3}}>The address, parcel and service are already on the Royal Mail order.</div></div><a className="btn" href="https://business.parcel.royalmail.com/orders/" target="royalMailPay">Open Royal Mail orders</a></div>
               </div>
               <details><summary style={{cursor:'pointer',fontSize:13,color:'#666'}}>Royal Mail order options</summary><div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:10}}><form action={`/api/admin/orders/${id}/cancel-royal-mail`} method="post"><button className="btn" type="submit" style={{borderColor:'#d6a4a4',color:'#8a2d2d',background:'#fff'}}>Cancel Royal Mail order</button></form><form action={`/api/admin/orders/${id}/cancel-royal-mail`} method="post"><input type="hidden" name="force_clear" value="1"/><button className="btn" type="submit" style={{background:'#fff',color:'#555',borderColor:'#ccc'}}>Clear from admin</button></form></div></details>
