@@ -1,4 +1,3 @@
-import RoyalMailAutoOpen from './RoyalMailAutoOpen';
 import {cookies} from 'next/headers';
 import {notFound,redirect} from 'next/navigation';
 import {isAdminValue} from '../../../../lib/adminAuth';
@@ -161,7 +160,7 @@ export default async function OrderDetail({params,searchParams}){
               <div style={{border:'1px solid #dfe3dc',borderRadius:12,padding:15,display:'grid',gridTemplateColumns:'1fr auto',gap:14,alignItems:'center'}}>
                 <div><small style={{color:'#747972'}}>SHIPPING SERVICE</small><div style={{fontSize:17,fontWeight:700,marginTop:3}}>{postageName}</div><div style={{fontSize:18,fontWeight:800,marginTop:4}}>Royal Mail online price: £{postagePrice.toFixed(2)}</div><div style={{fontSize:13,color:'#687068',marginTop:2}}>Automatically selected from the customer's checkout choice. Price shown is Royal Mail's current online Large Letter price.</div></div><span style={{fontSize:12,fontWeight:700,background:'#eaf4ff',color:'#376482',padding:'5px 8px',borderRadius:999}}>Selected</span>
               </div>
-              <form action={`/api/admin/orders/${id}/royal-mail?v=3`} method="post" style={{display:'flex',justifyContent:'flex-end',alignItems:'end',gap:12,flexWrap:'wrap'}}><input type="hidden" name="postage_service" value={defaultPostage}/><input type="hidden" name="sheet_count" value={String(packageSheets)}/><button className="btn" type="submit" style={{minWidth:220}}>Confirm & pay postage</button></form>
+              <form action={`/api/admin/orders/${id}/royal-mail?v=3`} method="post" target="royalMailPay" onSubmit={undefined} style={{display:'flex',justifyContent:'flex-end',alignItems:'end',gap:12,flexWrap:'wrap'}}><input type="hidden" name="postage_service" value={defaultPostage}/><input type="hidden" name="sheet_count" value={String(packageSheets)}/><button className="btn" type="submit" style={{minWidth:220}}>Confirm & pay postage</button></form>
             </>}
             {rmNotice&&<p style={{margin:0,fontWeight:600}}>{rmNotice}</p>}
             {query?.rm==='failed'&&rmEvents?.[0]?.event_type==='royal_mail_order_failed'&&<p style={{margin:0,color:'#8a2d2d'}}>{rmEvents[0].details?.message||'Royal Mail returned an error.'}</p>}
