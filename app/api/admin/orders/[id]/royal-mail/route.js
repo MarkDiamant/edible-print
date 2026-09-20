@@ -155,7 +155,7 @@ export async function POST(req,{params}){
       return NextResponse.redirect(new URL(`/admin/orders/${id}?rm=failed`,req.url),303);
     }
 
-    await db.from('order_events').insert({order_id:id,event_type:'royal_mail_order_created',actor:'admin',details:{order_identifier:created.orderIdentifier||created.orderId||created.id||null,order_reference:created.orderReference||orderRef,tracking_number:created.trackingNumber||null,sheet_count:sheetCount,weight_grams:weightInGrams,shipping_method:order.shipping_method,postage_choice:postageChoice,service_code:code,replacement_number:createdEvents.length?replacementNumber:null}});
+    await db.from('order_events').insert({order_id:id,event_type:'royal_mail_order_created',actor:'admin',details:{order_identifier:created.orderIdentifier||created.orderId||created.id||null,order_reference:created.orderReference||orderRef,tracking_number:created.trackingNumber||created.packages?.[0]?.trackingNumber||null,sheet_count:sheetCount,weight_grams:weightInGrams,shipping_method:order.shipping_method,postage_choice:postageChoice,service_code:code,replacement_number:createdEvents.length?replacementNumber:null}});
     return NextResponse.redirect('https://business.parcel.royalmail.com/orders/',303);
   }catch(error){
     console.error('Click & Drop order export error',error);
