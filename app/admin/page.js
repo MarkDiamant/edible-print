@@ -4,6 +4,7 @@ import {getSupabaseAdmin} from '../../lib/supabaseAdmin';
 import {formatOrderNumber} from '../../lib/orderNumber';
 import AdminLogin from './AdminLogin';
 import AdminOrdersTable from './AdminOrdersTable';
+import AdminSalesOverview from './AdminSalesOverview';
 
 export const dynamic='force-dynamic';
 
@@ -26,5 +27,6 @@ export default async function Admin({searchParams}){
     console.log('Admin live orders',orders.slice(0,10).map(o=>({id:o.id,created_at:o.created_at,email:o.email,order_number:o.order_number,payment_status:o.payment_status})));
   }catch(e){configError=e.message||'Admin database connection is not configured.'}
   const paid=orders.filter(o=>o.payment_status==='paid').length,open=orders.filter(o=>o.fulfilment_status!=='fulfilled').length,total=orders.reduce((s,o)=>s+(o.total_pence||0),0);
-  return <main className="admin-shell"><header className="admin-top"><div><h1>Edible Print</h1><p>Orders</p></div><div className="admin-top-actions"><a href="/" className="admin-store-link">View shop</a><form action="/api/admin/logout" method="post"><button className="admin-store-link admin-logout" type="submit">Log out</button></form></div></header><section className="admin-stats"><div><span>Orders</span><strong>{orders.length}</strong></div><div><span>Paid</span><strong>{paid}</strong></div><div><span>To fulfil</span><strong>{open}</strong></div><div><span>Sales</span><strong>£{(total/100).toFixed(2)}</strong></div></section><section className="admin-panel"><div className="admin-panel-head"><div><h2>Orders</h2><p style={{margin:'4px 0 0',color:'#6c716b',fontSize:14}}>Click anywhere on an order to open it.</p></div><span>{orders.length} orders</span></div>{configError?<p>{configError}</p>:!orders.length?<p>No paid orders yet.</p>:<AdminOrdersTable orders={orders}/>}</section></main>;
+  const salesData=orders.filter(o=>o.payment_status==='paid').map(o=>({date:o.source_created_at||o.paid_at||o.created_at,total_pence:Number(o.total_pence||0)}));
+  return <main className="admin-shell"><header className="admin-top"><div><h1>Edible Print</h1><p>Orders</p></div><div className="admin-top-actions"><a href="/" className="admin-store-link">View shop</a><form action="/api/admin/logout" method="post"><button className="admin-store-link admin-logout" type="submit">Log out</button></form></div></header><section className="admin-stats"><div><span>Orders</span><strong>{orders.length}</strong></div><div><span>Paid</span><strong>{paid}</strong></div><div><span>To fulfil</span><strong>{open}</strong></div><div><span>Sales</span><strong>£{(total/100).toFixed(2)}</strong></div></section><AdminSalesOverview orders={salesData}/><section className="admin-panel"><div className="admin-panel-head"><div><h2>Orders</h2><p style={{margin:'4px 0 0',color:'#6c716b',fontSize:14}}>Click anywhere on an order to open it.</p></div><span>{orders.length} orders</span></div>{configError?<p>{configError}</p>:!orders.length?<p>No paid orders yet.</p>:<AdminOrdersTable orders={orders}/>}</section></main>;
 }
