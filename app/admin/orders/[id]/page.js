@@ -108,6 +108,8 @@ export default async function OrderDetail({params,searchParams}){
   const remotePackage=remoteRoyalMail?.packages?.[0]||{};
   const trackingNumber=remoteRoyalMail?.trackingNumber||remotePackage?.trackingNumber||royalMail?.details?.tracking_number||'';
   const trackingStatus=remoteRoyalMail?.trackingStatus||remoteRoyalMail?.status||remotePackage?.trackingStatus||remotePackage?.status||'';
+  const importedArtworkCount=(items||[]).reduce((count,item)=>count+(Array.isArray(item.source_attributes)?item.source_attributes.filter(attr=>/image_upload/i.test(String(attr?.key||''))&&/^https?:\/\//i.test(String(attr?.value||''))).length:0),0);
+  const artworkFileCount=signed.length+importedArtworkCount;
   const customerMessage=messages?.[0]?.details?.message||'';
   console.log('Admin order linked data',{id,artwork:(artwork||[]).map(a=>({id:a.id,order_item_id:a.order_item_id,draft_item_id:a.draft_item_id,filename:a.original_filename})),customerMessage,instructionEvents:(instructionEvents||[]).map(e=>e.details)});
   const instructionMap=new Map(instructionEvents.map(e=>[e.details?.source_draft_item_id,parseArtworkInstructions(e.details?.instructions||'')]));
@@ -189,7 +191,7 @@ export default async function OrderDetail({params,searchParams}){
       <aside style={{display:'grid',gap:18}}>
         <section style={card}><h2 style={{margin:'0 0 12px',fontSize:18}}>Notes</h2><p style={{margin:0,whiteSpace:'pre-wrap',color:customerMessage?'#333':'#777'}}>{customerMessage||'No notes from customer'}</p></section>
         <section style={card}><h2 style={{margin:'0 0 12px',fontSize:18}}>Customer</h2><strong>{customerName}</strong><div style={{marginTop:14}}><strong>Contact information</strong><p style={{margin:'6px 0 0'}}><a href={`mailto:${order.email}`}>{order.email}</a><br/>{order.phone||''}</p></div>{!isCollection&&<div style={{marginTop:16}}><strong>Shipping address</strong><div style={{marginTop:6,lineHeight:1.5}}><strong>{customerName}</strong>{addressLines.map((line,i)=><div key={i}>{line}</div>)}</div></div>}</section>
-        <section style={card}><h2 style={{margin:'0 0 12px',fontSize:18}}>Order summary</h2><p style={{margin:'0 0 6px'}}><strong>{(items||[]).reduce((n,x)=>n+Number(x.quantity||0),0)}</strong> item(s)</p><p style={{margin:'0 0 6px'}}><strong>{signed.length}</strong> artwork file(s)</p><p style={{margin:0}}><strong>£{(order.total_pence/100).toFixed(2)}</strong> total</p></section>
+        <section style={card}><h2 style={{margin:'0 0 12px',fontSize:18}}>Order summary</h2><p style={{margin:'0 0 6px'}}><strong>{(items||[]).reduce((n,x)=>n+Number(x.quantity||0),0)}</strong> item(s)</p><p style={{margin:'0 0 6px'}}><strong>{artworkFileCount}</strong> artwork file(s)</p><p style={{margin:0}}><strong>£{(order.total_pence/100).toFixed(2)}</strong> total</p></section>
       </aside>
     </div>
   </main>;
