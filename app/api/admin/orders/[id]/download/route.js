@@ -33,10 +33,11 @@ export async function GET(req,{params}){
   let y=height-52;
 
   try{
-    const logoRes=await fetch(new URL('/logo.png',new URL(req.url).origin),{cache:'no-store'});
+    const logoRes=await fetch('https://cdn.shopify.com/s/files/1/1000/0839/5135/files/Edible_Print_Logo_resdesigned.png?v=1776435305',{cache:'no-store'});
     if(logoRes.ok){
       const bytes=await logoRes.arrayBuffer();
-      const logo=await pdf.embedPng(bytes);
+      let logo;
+      try{logo=await pdf.embedPng(bytes)}catch{logo=await pdf.embedJpg(bytes)}
       const s=logo.scaleToFit(145,58);
       page.drawImage(logo,{x:48,y:y-s.height+12,width:s.width,height:s.height});
     }else throw new Error('logo');
