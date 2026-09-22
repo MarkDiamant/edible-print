@@ -33,7 +33,7 @@ export async function GET(req,{params}){
   let y=height-52;
 
   try{
-    const logoRes=await fetch(new URL('/logo.png',req.url),{cache:'no-store'});
+    const logoRes=await fetch(new URL('/logo.png',new URL(req.url).origin),{cache:'no-store'});
     if(logoRes.ok){
       const bytes=await logoRes.arrayBuffer();
       const logo=await pdf.embedPng(bytes);
