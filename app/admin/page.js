@@ -22,7 +22,7 @@ export default async function Admin({searchParams}){
     const ids=(data||[]).map(o=>o.id);
     const {data:events}=ids.length?await db.from('order_events').select('order_id,event_type,details,created_at').in('order_id',ids).in('event_type',['royal_mail_order_created','royal_mail_order_deleted']).order('created_at',{ascending:false}):{data:[]};
     const rm=new Map(); for(const e of events||[]){if(!rm.has(e.order_id))rm.set(e.order_id,e)}
-    orders=(data||[]).map(o=>{const r=rm.get(o.id),d=r?.event_type==='royal_mail_order_created'?(r.details||{}):{};return {...o,customer_name:[o.first_name,o.last_name].filter(Boolean).join(' '),display_order_number:formatOrderNumber(o.order_number),royal_mail_reference:d.order_reference||'',tracking_number:d.tracking_number||'',royal_mail_weight:d.weight_grams||null};});
+    orders=(data||[]).map(o=>{const r=rm.get(o.id),d=r?.event_type==='royal_mail_order_created'?(r.details||{}):{};return {...o,customer_name:[o.first_name,o.last_name].filter(Boolean).join(' '),display_order_number:o.source_order_name?String(o.source_order_name).replace(/^#/,''):formatOrderNumber(o.order_number),royal_mail_reference:d.order_reference||'',tracking_number:d.tracking_number||'',royal_mail_weight:d.weight_grams||null};});
     console.log('Admin live orders',orders.slice(0,10).map(o=>({id:o.id,created_at:o.created_at,email:o.email,order_number:o.order_number,payment_status:o.payment_status})));
   }catch(e){configError=e.message||'Admin database connection is not configured.'}
   const paid=orders.filter(o=>o.payment_status==='paid').length,open=orders.filter(o=>o.fulfilment_status!=='fulfilled').length,total=orders.reduce((s,o)=>s+(o.total_pence||0),0);
