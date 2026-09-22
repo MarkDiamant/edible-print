@@ -109,7 +109,6 @@ export default async function OrderDetail({params,searchParams}){
   const trackingNumber=remoteRoyalMail?.trackingNumber||remotePackage?.trackingNumber||royalMail?.details?.tracking_number||'';
   const trackingStatus=remoteRoyalMail?.trackingStatus||remoteRoyalMail?.status||remotePackage?.trackingStatus||remotePackage?.status||'';
   const importedArtworkCount=(items||[]).reduce((count,item)=>count+(Array.isArray(item.source_attributes)?item.source_attributes.filter(attr=>/image_upload/i.test(String(attr?.key||''))&&/^https?:\/\//i.test(String(attr?.value||''))).length:0),0);
-  const artworkFileCount=signed.length+importedArtworkCount;
   const customerMessage=messages?.[0]?.details?.message||'';
   console.log('Admin order linked data',{id,artwork:(artwork||[]).map(a=>({id:a.id,order_item_id:a.order_item_id,draft_item_id:a.draft_item_id,filename:a.original_filename})),customerMessage,instructionEvents:(instructionEvents||[]).map(e=>e.details)});
   const instructionMap=new Map(instructionEvents.map(e=>[e.details?.source_draft_item_id,parseArtworkInstructions(e.details?.instructions||'')]));
@@ -118,6 +117,7 @@ export default async function OrderDetail({params,searchParams}){
     const {data}=await db.storage.from('artwork').createSignedUrl(a.object_path,300,{download:a.original_filename});
     signed.push({...a,url:data?.signedUrl||null});
   }
+  const artworkFileCount=signed.length+importedArtworkCount;
   const address=order.shipping_address||{};
   const addressLines=[address.line1||address.address1,address.line2||address.address2,address.city,address.state||address.province,address.postal_code||address.zip,address.country].filter(Boolean);
   const customerName=`${order.first_name||''} ${order.last_name||''}`.trim();
