@@ -31,6 +31,7 @@ function eventLabel(event){
   if(t==='email_feedback')return d.scheduled_at?'Feedback email was scheduled for the customer.':'Feedback email was sent to the customer.';
   if(t==='email_failed')return `Customer email failed${d.type?` (${d.type})`:''}.`;
   if(t==='royal_mail_order_created')return `Royal Mail order created${d.order_reference?` (${d.order_reference})`:''}.`;
+  if(t==='royal_mail_tracking_updated')return `Royal Mail tracking updated${d.tracking_status?` — ${d.tracking_status}`:''}${d.tracking_number?` (${d.tracking_number})`:''}.`;
   if(t==='royal_mail_order_deleted')return 'Royal Mail order was deleted / cancelled in Click & Drop.';
   if(t==='royal_mail_order_failed')return d.action==='delete'?'Royal Mail cancellation failed.':'Royal Mail order creation failed.';
   if(t==='refund_issued')return `Full refund issued${d.amount?` — £${(Number(d.amount)/100).toFixed(2)}`:''}.`;
@@ -94,9 +95,9 @@ export default async function OrderDetail({params,searchParams}){
   const {data:events}=await db.from('order_events').select('event_type,details,created_at').eq('order_id',id).order('created_at',{ascending:false});
   const messages=(events||[]).filter(e=>e.event_type==='customer_message');
   const instructionEvents=(events||[]).filter(e=>e.event_type==='artwork_instructions');
-  const rmEvents=(events||[]).filter(e=>['royal_mail_order_created','royal_mail_order_deleted','royal_mail_order_failed'].includes(e.event_type));
-  const latestRmState=(events||[]).find(e=>['royal_mail_order_created','royal_mail_order_deleted'].includes(e.event_type));
-  let royalMail=latestRmState?.event_type==='royal_mail_order_created'?latestRmState:null;
+  const rmEvents=(events||[]).filter(e=>['royal_mail_order_created','royal_mail_tracking_updated','royal_mail_order_deleted','royal_mail_order_failed'].includes(e.event_type));
+  const latestRmState=(events||[]).find(e=>['royal_mail_order_created','royal_mail_tracking_updated','royal_mail_order_deleted'].includes(e.event_type));
+  let royalMail=['royal_mail_order_created','royal_mail_tracking_updated'].includes(latestRmState?.event_type)?latestRmState:null;
   let syncedDeletedEvent=null;
   const royalMailAge=royalMail?.created_at?Date.now()-new Date(royalMail.created_at).getTime():Infinity;
   if(royalMail){const exists=await remoteOrderExists(royalMail.details||{});if(!exists){
