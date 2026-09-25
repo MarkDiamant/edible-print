@@ -1,6 +1,6 @@
 import {NextResponse} from 'next/server';
-import {getSupabaseAdmin} from '../../../../../lib/supabaseAdmin';
-import {sendOrderEmail} from '../../../../../lib/transactionalEmail';
+import {getSupabaseAdmin} from '../../../../lib/supabaseAdmin';
+import {sendOrderEmail} from '../../../../lib/transactionalEmail';
 
 const CLICK_DROP_ORDERS='https://api.parcel.royalmail.com/api/v1/Orders';
 const clean=v=>String(v||'').trim();
