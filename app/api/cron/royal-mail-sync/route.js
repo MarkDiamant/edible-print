@@ -31,7 +31,7 @@ export async function GET(req){
   const apiKey=process.env.ROYAL_MAIL_CLICK_DROP_API_KEY;
   if(!apiKey)return NextResponse.json({error:'Click & Drop is not configured'},{status:503});
   const db=getSupabaseAdmin();
-  const {data:events,error}=await db.from('order_events').select('order_id,details,created_at').eq('event_type','royal_mail_order_created').order('created_at',{ascending:false}).limit(250);
+  const {data:events,error}=await db.from('order_events').select('order_id,details,created_at').in('event_type',['royal_mail_order_created','royal_mail_tracking_updated']).order('created_at',{ascending:false}).limit(250);
   if(error)return NextResponse.json({error:'Could not load Royal Mail orders'},{status:500});
   const latest=new Map();
   for(const e of events||[])if(!latest.has(e.order_id))latest.set(e.order_id,e);
