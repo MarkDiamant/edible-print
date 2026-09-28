@@ -54,7 +54,9 @@ export async function GET(req){
       await db.from('order_events').insert({order_id:orderId,event_type:'royal_mail_tracking_updated',actor:'sync',details:{...e.details,tracking_number:tracking,tracking_status:trackingStatus,order_reference:reference,order_identifier:identifier}});
       updated++;
     }
-    if(order.fulfilment_status!=='fulfilled'&&labelReady(remote,tracking)){
+    // A Royal Mail tracking number is assigned only once postage/label creation has completed.
+    // Treat that as the dispatch trigger rather than waiting for a later tracking status.
+    if(order.fulfilment_status!=='fulfilled'&&tracking){
       await db.from('orders').update({status:'fulfilled',fulfilment_status:'fulfilled',fulfilled_at:new Date().toISOString(),tracking_number:tracking||null}).eq('id',orderId).eq('payment_status','paid');
       await db.from('order_events').insert({order_id:orderId,event_type:'fulfilment_fulfilled',actor:'sync',details:{source:'royal_mail',tracking_number:tracking,tracking_status:trackingStatus}});
       try{await sendOrderEmail(orderId,'dispatched');const feedbackAt=new Date(Date.now()+5*24*60*60*1000).toISOString();await sendOrderEmail(orderId,'feedback',{scheduledAt:feedbackAt})}catch(err){await db.from('order_events').insert({order_id:orderId,event_type:'email_failed',actor:'system',details:{type:'dispatched',message:String(err?.message||err)}})}
