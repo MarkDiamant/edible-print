@@ -11,8 +11,8 @@ export default function AdminOrdersTable({orders}){
   const [selected,setSelected]=useState([]);
   const [busy,setBusy]=useState(false);
   const [seen,setSeen]=useState(()=>new Set());
-  useEffect(()=>{try{setSeen(new Set(JSON.parse(localStorage.getItem('edibleprint-seen-orders')||'[]')))}catch{}},[]);
-  function openOrder(id,href){const next=new Set(seen);next.add(id);setSeen(next);try{localStorage.setItem('edibleprint-seen-orders',JSON.stringify([...next]))}catch{}router.push(href)}
+  useEffect(()=>{fetch('/api/admin/orders/seen',{cache:'no-store'}).then(r=>r.ok?r.json():{seen:[]}).then(x=>setSeen(new Set(x.seen||[]))).catch(()=>{})},[]);
+  async function openOrder(id,href){const next=new Set(seen);next.add(id);setSeen(next);fetch('/api/admin/orders/seen',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:id})}).catch(()=>{});router.push(href)}
   const allSelected=eligible.length>0&&eligible.every(o=>selected.includes(o.id));
 
   useEffect(()=>{
