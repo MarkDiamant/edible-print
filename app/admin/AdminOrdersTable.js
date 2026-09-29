@@ -57,7 +57,7 @@ export default function AdminOrdersTable({orders}){
     <div className="admin-table-wrap modern-wrap"><table className="admin-table modern-table"><thead><tr><th className="check-col"><input aria-label="Select all eligible postage" type="checkbox" checked={allSelected} onChange={toggleAll}/></th><th>Order</th><th>Date</th><th>Customer</th><th>Total</th><th>Fulfilment</th><th>Delivery status</th><th>Customer postage</th></tr></thead><tbody>{orders.map(o=>{
       const href=`/admin/orders/${o.id}`;
       const isEligible=o.payment_status==='paid'&&o.shipping_method!=='collection'&&o.fulfilment_status!=='fulfilled';
-      const status=o.fulfilment_status==='fulfilled'?(o.shipping_method==='collection'?'Collected':'Dispatched'):o.fulfilment_status==='ready'?(o.shipping_method==='collection'?'Ready for collection':'Ready'):o.fulfilment_status==='processing'?'Processing':'Order received';
+      const status=o.shipping_method==='collection'?(o.fulfilment_status==='fulfilled'?'Collected':o.fulfilment_status==='ready'?'Ready for collection':'Order received'):o.tracking_number?'Dispatched':o.royal_mail_reference?'Postage prepared':o.fulfilment_status==='ready'?'Ready':o.fulfilment_status==='processing'?'Processing':'Order received';
       const postageLabel=o.shipping_method==='collection'?'Collection':o.shipping_method==='express'?'Express':'Standard';
       const isNew=!seen.has(o.id)&&o.fulfilment_status!=='fulfilled';
       return <tr key={o.id} className={`modern-row ${isNew?'new-order':''}`} onClick={e=>{if(e.target.closest('input,button,a,label'))return;openOrder(o.id,href)}}>
@@ -66,7 +66,7 @@ export default function AdminOrdersTable({orders}){
         <td>{new Date(o.created_at).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</td>
         <td><strong>{o.first_name} {o.last_name}</strong><br/><small>{o.email}</small></td>
         <td><strong>£{(o.total_pence/100).toFixed(2)}</strong></td>
-        <td><span className={`admin-pill ${o.fulfilment_status==='fulfilled'?'fulfilled':'open'}`}>{status}</span></td>
+        <td><span className={`admin-pill ${(o.fulfilment_status==='fulfilled'||o.tracking_number)?'fulfilled':'open'}`}>{status}</span></td>
         <td><span className={`admin-pill ${o.tracking_number?'fulfilled':'open'}`}>{o.shipping_method==='collection'?'—':o.tracking_number?(String(o.tracking_status||'').toLowerCase().includes('deliver')?'Delivered':'On its way'):o.royal_mail_reference?'Postage prepared':'Not prepared'}</span>{o.tracking_number&&<div style={{fontSize:11,color:'#777',marginTop:4}}>{o.tracking_number} · <a href={`https://www.royalmail.com/track-your-item#/tracking-results/${encodeURIComponent(o.tracking_number)}`} target="_blank" rel="noreferrer" onClick={e=>e.stopPropagation()} style={{fontWeight:700}}>Track ↗</a></div>}</td><td><span className={`delivery-chip ${o.shipping_method==='express'?'express':''}`}><strong>{postageLabel}</strong>{o.shipping_method!=='collection'&&<small> customer selected</small>}</span></td>
       </tr>})}</tbody></table></div>
     <style jsx>{`
