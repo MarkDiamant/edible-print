@@ -4,7 +4,7 @@ import {getSupabaseAdmin} from '../../../../lib/supabaseAdmin';
 export async function GET(req){
   const accessToken=(req.headers.get('authorization')||'').replace(/^Bearer\\s+/i,'').trim();
   if(!accessToken)return NextResponse.json({error:'Unauthorized'},{status:401});
-  const authResponse=await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/user`,{headers:{apikey:process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,Authorization:`Bearer ${accessToken}`},cache:'no-store'});
+  const authResponse=await fetch(`https://diiqajrvlalkggjlutyn.supabase.co/auth/v1/user`,{headers:{apikey:'sb_publishable_I3i7l5-uwhJvx2HfAkNzzA_EkyiSniy',Authorization:`Bearer ${accessToken}`},cache:'no-store'});
   const user=authResponse.ok?await authResponse.json():null;
   if(!user?.email)return NextResponse.json({error:'Unauthorized'},{status:401});
   const db=getSupabaseAdmin();
