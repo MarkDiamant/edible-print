@@ -57,9 +57,13 @@ export async function GET(req){
     // A Royal Mail tracking number is assigned only once postage/label creation has completed.
     // Treat that as the dispatch trigger rather than waiting for a later tracking status.
     if(order.fulfilment_status!=='fulfilled'&&tracking){
-      await db.from('orders').update({status:'fulfilled',fulfilment_status:'fulfilled',fulfilled_at:new Date().toISOString(),tracking_number:tracking||null}).eq('id',orderId).eq('payment_status','paid');
-      await db.from('order_events').insert({order_id:orderId,event_type:'fulfilment_fulfilled',actor:'sync',details:{source:'royal_mail',tracking_number:tracking,tracking_status:trackingStatus}});
-      try{await sendOrderEmail(orderId,'dispatched');const feedbackAt=new Date(Date.now()+5*24*60*60*1000).toISOString();await sendOrderEmail(orderId,'feedback',{scheduledAt:feedbackAt})}catch(err){await db.from('order_events').insert({order_id:orderId,event_type:'email_failed',actor:'system',details:{type:'dispatched',message:String(err?.message||err)}})}
+      const {error:fulfilError}=await db.from('orders').update({status:'fulfilled',fulfilment_status:'fulfilled',fulfilled_at:new Date().toISOString()}).eq('id',orderId).eq('payment_status','paid');
+      if(fulfilError){console.error('Royal Mail fulfilment update failed',orderId,fulfilError);continue}
+      const {data:alreadyFulfilled}=await db.from('order_events').select('order_id').eq('order_id',orderId).eq('event_type','fulfilment_fulfilled').limit(1);
+      if(!alreadyFulfilled?.length){
+        await db.from('order_events').insert({order_id:orderId,event_type:'fulfilment_fulfilled',actor:'sync',details:{source:'royal_mail',tracking_number:tracking,tracking_status:trackingStatus}});
+        try{await sendOrderEmail(orderId,'dispatched');const feedbackAt=new Date(Date.now()+5*24*60*60*1000).toISOString();await sendOrderEmail(orderId,'feedback',{scheduledAt:feedbackAt})}catch(err){await db.from('order_events').insert({order_id:orderId,event_type:'email_failed',actor:'system',details:{type:'dispatched',message:String(err?.message||err)}})}
+      }
       dispatched++;
     }
   }
