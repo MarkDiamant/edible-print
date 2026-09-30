@@ -12,9 +12,12 @@ export default function ResetPassword(){
  useEffect(()=>{
    let mounted=true;
    const finish=(ok)=>{if(mounted){setReady(ok);setChecking(false)}};
-   supabase.auth.getSession().then(({data})=>finish(Boolean(data.session)));
-   const {data:{subscription}}=supabase.auth.onAuthStateChange((event,session)=>{
-     if(event==='PASSWORD_RECOVERY'||session){setReady(true);setChecking(false)}
+   const hash=new URLSearchParams(location.hash.replace(/^#/,''));
+   const recoveryInUrl=hash.get('type')==='recovery';
+   if(recoveryInUrl)finish(true);
+   else finish(false);
+   const {data:{subscription}}=supabase.auth.onAuthStateChange((event)=>{
+     if(event==='PASSWORD_RECOVERY'){setReady(true);setChecking(false)}
    });
    return()=>{mounted=false;subscription.unsubscribe()}
  },[]);
