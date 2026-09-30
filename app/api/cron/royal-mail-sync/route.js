@@ -60,8 +60,9 @@ export async function GET(req){
       const {error:fulfilError}=await db.from('orders').update({status:'fulfilled',fulfilment_status:'fulfilled',fulfilled_at:new Date().toISOString()}).eq('id',orderId).eq('payment_status','paid');
       if(fulfilError){console.error('Royal Mail fulfilment update failed',orderId,fulfilError);continue}
       const {data:alreadyFulfilled}=await db.from('order_events').select('order_id').eq('order_id',orderId).eq('event_type','fulfilment_fulfilled').limit(1);
-      if(!alreadyFulfilled?.length){
-        await db.from('order_events').insert({order_id:orderId,event_type:'fulfilment_fulfilled',actor:'sync',details:{source:'royal_mail',tracking_number:tracking,tracking_status:trackingStatus}});
+      if(!alreadyFulfilled?.length)await db.from('order_events').insert({order_id:orderId,event_type:'fulfilment_fulfilled',actor:'sync',details:{source:'royal_mail',tracking_number:tracking,tracking_status:trackingStatus}});
+      const {data:dispatchEmails}=await db.from('order_events').select('order_id').eq('order_id',orderId).eq('event_type','email_dispatched').limit(1);
+      if(!dispatchEmails?.length){
         try{await sendOrderEmail(orderId,'dispatched');const feedbackAt=new Date(Date.now()+5*24*60*60*1000).toISOString();await sendOrderEmail(orderId,'feedback',{scheduledAt:feedbackAt})}catch(err){await db.from('order_events').insert({order_id:orderId,event_type:'email_failed',actor:'system',details:{type:'dispatched',message:String(err?.message||err)}})}
       }
       dispatched++;
