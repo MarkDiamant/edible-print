@@ -133,7 +133,8 @@ export default async function OrderDetail({params,searchParams}){
   const postageName=defaultPostage==='express'?'Tracked 24 Large Letter':'Tracked 48 Large Letter';
   const postagePrice=defaultPostage==='express'?3.80:2.85;
   const number=order.source_order_name?String(order.source_order_name).replace(/^#/,''):formatOrderNumber(order.order_number);
-  const timeline=[...(syncedDeletedEvent?[syncedDeletedEvent]:[]),...(events||[])].map(e=>({...e,label:eventLabel(e)})).filter(e=>e.label);
+  let fulfilmentShown=false;
+  const timeline=[...(syncedDeletedEvent?[syncedDeletedEvent]:[]),...(events||[])].filter(e=>e.event_type!=='fulfilment_fulfilled'||(!fulfilmentShown&&(fulfilmentShown=true))).map(e=>({...e,label:eventLabel(e)})).filter(e=>e.label);
   const rmNotice=query?.rm==='created'?'Royal Mail order created successfully.':query?.rm==='exists'?'This order already exists in Click & Drop.':query?.rm==='deleted'?'Royal Mail order cancelled/deleted successfully.':query?.rm==='delete-failed'?'Royal Mail could not cancel this stored link. If you already deleted the order in Click & Drop, use “Clear from admin” below.':query?.rm==='failed'?'Royal Mail could not accept the order. Check the latest error below and try again.':query?.rm==='config'?'Click & Drop API key is not configured.':query?.rm==='weight'?'This order is over the 750g Large Letter limit and needs manual postage setup.':'';
   const notice=query?.refund==='done'?'Refund completed successfully.':query?.refund==='failed'?'Refund failed — check the timeline/error logs.':query?.refund==='exists'?'This order has already been refunded.':query?.return==='done'?'Return recorded successfully.':query?.return==='exists'?'This order is already marked returned.':'';
   return <main className="admin-shell" style={{maxWidth:1220,margin:'0 auto',padding:'24px 20px 50px'}}>
