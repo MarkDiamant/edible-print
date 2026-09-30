@@ -7,6 +7,11 @@ function Modal({title,body,onClose}){
  return <div role="dialog" aria-modal="true" aria-labelledby="reset-modal-title" style={{position:'fixed',inset:0,zIndex:1000,background:'rgba(30,35,29,.45)',display:'grid',placeItems:'center',padding:20}}><div style={{position:'relative',width:'min(520px,100%)',background:'#fff',borderRadius:18,padding:'34px 30px 30px',boxShadow:'0 20px 60px rgba(0,0,0,.2)',textAlign:'center'}}><button type="button" aria-label="Close" onClick={onClose} style={{position:'absolute',right:14,top:10,border:0,background:'none',fontSize:30,lineHeight:1,cursor:'pointer',color:'#555'}}>×</button><h2 id="reset-modal-title" style={{marginTop:0}}>{title}</h2><p style={{lineHeight:1.6}}>{body}</p><button className="btn" type="button" onClick={onClose}>OK</button></div></div>
 }
 
+function PasswordInput({name,placeholder}){
+ const [show,setShow]=useState(false);
+ return <div style={{position:'relative'}}><input name={name} type={show?'text':'password'} placeholder={placeholder} minLength="8" autoComplete="new-password" required style={{paddingRight:48}}/><button type="button" aria-label={show?'Hide password':'Show password'} title={show?'Hide password':'Show password'} onClick={()=>setShow(v=>!v)} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',border:0,background:'none',padding:6,cursor:'pointer',fontSize:20,lineHeight:1}}>{show?'◉':'◉'}</button></div>
+}
+
 export default function ResetPassword(){
  const [ready,setReady]=useState(false),[checking,setChecking]=useState(true),[modal,setModal]=useState(null);
  useEffect(()=>{
@@ -36,5 +41,5 @@ export default function ResetPassword(){
    setModal(null);
    if(done)location.href='/account';
  }
- return <><SiteHeader/>{modal&&<Modal title={modal.title} body={modal.body} onClose={closeModal}/>}<main className="account-login"><h1>Set a new password</h1>{checking?<p>Checking your reset link…</p>:ready?<><p>Choose the password you want to use for your Edible Print account.</p><form onSubmit={submit}><input name="password" type="password" placeholder="New password" minLength="8" autoComplete="new-password" required/><input name="confirmPassword" type="password" placeholder="Confirm new password" minLength="8" autoComplete="new-password" required/><button className="btn">Save new password</button></form></>:<><p>This password-reset link is invalid or has expired.</p><button className="btn" type="button" onClick={()=>location.href='/account'}>Back to sign in</button></>}</main><SiteFooter/></>
+ return <><SiteHeader/>{modal&&<Modal title={modal.title} body={modal.body} onClose={closeModal}/>}<main className="account-login"><h1>Set a new password</h1>{checking?<p>Checking your reset link…</p>:ready?<><p>Choose the password you want to use for your Edible Print account.</p><form onSubmit={submit}><PasswordInput name="password" placeholder="New password"/><PasswordInput name="confirmPassword" placeholder="Confirm new password"/><button className="btn">Save new password</button></form></>:<><p>This password-reset link is invalid or has expired.</p><button className="btn" type="button" onClick={()=>location.href='/account'}>Back to sign in</button></>}</main><SiteFooter/></>
 }
