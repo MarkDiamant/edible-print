@@ -124,6 +124,7 @@ export default async function OrderDetail({params,searchParams}){
   const customerName=`${order.first_name||''} ${order.last_name||''}`.trim();
   const isCollection=order.shipping_method==='collection';
   const fulfilledLabel=isCollection?'Collected':'Dispatched';
+  const effectiveFulfilment=!isCollection&&trackingNumber?'fulfilled':order.fulfilment_status;
   const sheetCount=Math.max(1,(items||[]).reduce((n,x)=>n+(Number(x.quantity)||0),0));
   const requestedSheets=Number(query?.sheets);
   const packageSheets=Number.isInteger(requestedSheets)&&requestedSheets>=1&&requestedSheets<=23?requestedSheets:sheetCount;
@@ -137,7 +138,7 @@ export default async function OrderDetail({params,searchParams}){
   const notice=query?.refund==='done'?'Refund completed successfully.':query?.refund==='failed'?'Refund failed — check the timeline/error logs.':query?.refund==='exists'?'This order has already been refunded.':query?.return==='done'?'Return recorded successfully.':query?.return==='exists'?'This order is already marked returned.':'';
   return <main className="admin-shell" style={{maxWidth:1220,margin:'0 auto',padding:'24px 20px 50px'}}>
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:16,flexWrap:'wrap',marginBottom:18}}>
-      <div><p style={{margin:'0 0 8px'}}><a href="/admin">← Orders</a></p><div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}><h1 style={{margin:0,fontSize:28}}>#{number}</h1><span className="admin-pill paid">{order.payment_status}</span><span className={`admin-pill ${order.fulfilment_status==='fulfilled'?'fulfilled':'open'}`}>{order.fulfilment_status==='fulfilled'?fulfilledLabel:order.fulfilment_status}</span></div><p style={{margin:'6px 0 0',color:'#6a6a66',fontSize:14}}>{eventTime(order.created_at)} · {order.source==='shopify'?'Imported from Shopify':'Online Store'}</p></div>
+      <div><p style={{margin:'0 0 8px'}}><a href="/admin">← Orders</a></p><div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}><h1 style={{margin:0,fontSize:28}}>#{number}</h1><span className="admin-pill paid">{order.payment_status}</span><span className={`admin-pill ${effectiveFulfilment==='fulfilled'?'fulfilled':'open'}`}>{effectiveFulfilment==='fulfilled'?fulfilledLabel:effectiveFulfilment</span></div><p style={{margin:'6px 0 0',color:'#6a6a66',fontSize:14}}>{eventTime(order.created_at)} · {order.source==='shopify'?'Imported from Shopify':'Online Store'}</p></div>
       <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
         {['processing','ready','fulfilled'].map(action=><form key={action} action={`/api/admin/orders/${id}/status`} method="post"><input type="hidden" name="action" value={action}/><button className="btn" type="submit">{action==='processing'?'Mark processing':action==='ready'?(isCollection?'Ready for collection':'Mark ready'):(isCollection?'Mark collected':'Mark dispatched')}</button></form>)}
         {order.source!=='shopify'&&order.payment_status!=='refunded'&&<a className="btn" href={`/admin/orders/${id}?confirm=refund`}>Refund</a>}
