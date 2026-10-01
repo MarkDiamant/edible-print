@@ -124,7 +124,7 @@ export default async function OrderDetail({params,searchParams}){
   const addressLines=[address.line1||address.address1,address.line2||address.address2,address.city,address.state||address.province,address.postal_code||address.zip,address.country].filter(Boolean);
   const customerName=`${order.first_name||''} ${order.last_name||''}`.trim();
   const isCollection=order.shipping_method==='collection';
-  const fulfilledLabel=order.completed_at?'Completed':isCollection?'Collected':'Dispatched';
+  const fulfilledLabel=isCollection?'Collected':order.completed_at?'Completed':'Dispatched';
   const effectiveFulfilment=!isCollection&&trackingNumber?'fulfilled':order.fulfilment_status;
   const sheetCount=Math.max(1,(items||[]).reduce((n,x)=>n+(Number(x.quantity)||0),0));
   const requestedSheets=Number(query?.sheets);
