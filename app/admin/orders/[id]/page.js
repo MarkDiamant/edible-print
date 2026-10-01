@@ -26,6 +26,7 @@ function eventLabel(event){
   if(t==='fulfilment_ready')return 'Order was marked ready.';
   if(t==='email_ready')return 'Ready update email was sent to the customer.';
   if(t==='fulfilment_fulfilled')return 'Order was marked as dispatched / fulfilled.';
+  if(t==='fulfilment_completed')return 'Order was marked as completed.';
   if(t==='email_dispatched')return 'Dispatch email was sent — the customer was told the order is on its way.';
   if(t==='email_collected')return 'Collection confirmation email was sent to the customer.';
   if(t==='email_feedback')return d.scheduled_at?'Feedback email was scheduled for the customer.':'Feedback email was sent to the customer.';
@@ -123,7 +124,7 @@ export default async function OrderDetail({params,searchParams}){
   const addressLines=[address.line1||address.address1,address.line2||address.address2,address.city,address.state||address.province,address.postal_code||address.zip,address.country].filter(Boolean);
   const customerName=`${order.first_name||''} ${order.last_name||''}`.trim();
   const isCollection=order.shipping_method==='collection';
-  const fulfilledLabel=isCollection?'Collected':'Dispatched';
+  const fulfilledLabel=order.completed_at?'Completed':isCollection?'Collected':'Dispatched';
   const effectiveFulfilment=!isCollection&&trackingNumber?'fulfilled':order.fulfilment_status;
   const sheetCount=Math.max(1,(items||[]).reduce((n,x)=>n+(Number(x.quantity)||0),0));
   const requestedSheets=Number(query?.sheets);
@@ -142,6 +143,7 @@ export default async function OrderDetail({params,searchParams}){
       <div><p style={{margin:'0 0 8px'}}><a href="/admin">← Orders</a></p><div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}><h1 style={{margin:0,fontSize:28}}>#{number}</h1><span className="admin-pill paid">{order.payment_status}</span><span className={`admin-pill ${effectiveFulfilment==='fulfilled'?'fulfilled':'open'}`}>{effectiveFulfilment==='fulfilled'?fulfilledLabel:effectiveFulfilment}</span></div><p style={{margin:'6px 0 0',color:'#6a6a66',fontSize:14}}>{eventTime(order.created_at)} · {order.source==='shopify'?'Imported from Shopify':'Online Store'}</p></div>
       <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
         {['processing','ready','fulfilled'].map(action=><form key={action} action={`/api/admin/orders/${id}/status`} method="post"><input type="hidden" name="action" value={action}/><button className="btn" type="submit">{action==='processing'?'Mark processing':action==='ready'?(isCollection?'Ready for collection':'Mark ready'):(isCollection?'Mark collected':'Mark dispatched')}</button></form>)}
+        {!order.completed_at&&<form action={`/api/admin/orders/${id}/status`} method="post"><input type="hidden" name="action" value="completed"/><button className="btn" type="submit">Mark as completed</button></form>}
         {order.source!=='shopify'&&order.payment_status!=='refunded'&&<a className="btn" href={`/admin/orders/${id}?confirm=refund`}>Refund</a>}
         {order.fulfilment_status!=='returned'&&<a className="btn" href={`/admin/orders/${id}?confirm=return`}>Return</a>}
         <details style={{position:'relative'}}><summary className="btn" style={{listStyle:'none',cursor:'pointer'}}>More actions ▾</summary><div style={{position:'absolute',right:0,top:'calc(100% + 6px)',zIndex:10,minWidth:210,background:'#fff',border:'1px solid #ddd',borderRadius:10,boxShadow:'0 8px 24px rgba(0,0,0,.12)',padding:6}}><a href={`/api/admin/orders/${id}/download`} style={{display:'block',padding:'10px 12px',textDecoration:'none'}}>Download invoice PDF</a>{!isCollection&&<a href="https://business.parcel.royalmail.com/orders/" target="royalMailPay" style={{display:'block',padding:'10px 12px',textDecoration:'none'}} >Royal Mail order history</a>}</div></details>
