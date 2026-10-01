@@ -1,0 +1,3 @@
+import {cookies} from 'next/headers';import {redirect} from 'next/navigation';import {isAdminValue} from '../../../lib/adminAuth';import DispatchSettingsForm from './DispatchSettingsForm';
+export const dynamic='force-dynamic';
+export default async function DispatchSettings(){const jar=await cookies();if(!isAdminValue(jar.get('edible_admin')?.value))redirect('/admin');return <main className="admin-shell"><header className="admin-top"><div><h1>Edible Print</h1><p>Dispatch settings</p></div><div className="admin-top-actions"><a href="/admin" className="admin-store-link">← Orders</a><a href="/" className="admin-store-link">View shop</a></div></header><DispatchSettingsForm/></main>}
