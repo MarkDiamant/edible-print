@@ -57,7 +57,7 @@ export default function AdminOrdersTable({orders}){
     <div className="admin-table-wrap modern-wrap"><table className="admin-table modern-table"><thead><tr><th className="check-col"><input aria-label="Select all eligible postage" type="checkbox" checked={allSelected} onChange={toggleAll}/></th><th>Order</th><th>Date</th><th>Customer</th><th>Total</th><th>Fulfilment</th><th>Delivery status</th><th>Customer postage</th></tr></thead><tbody>{orders.map(o=>{
       const href=`/admin/orders/${o.id}`;
       const isEligible=o.payment_status==='paid'&&o.shipping_method!=='collection'&&o.fulfilment_status!=='fulfilled';
-      const status=o.completed_at?'Completed':o.shipping_method==='collection'?(o.fulfilment_status==='fulfilled'?'Collected':o.fulfilment_status==='ready'?'Ready for collection':'Order received'):o.tracking_number?'Dispatched':o.royal_mail_reference?'Postage prepared':o.fulfilment_status==='ready'?'Ready':o.fulfilment_status==='processing'?'Processing':'Order received';
+      const status=o.shipping_method==='collection'?(o.fulfilment_status==='fulfilled'?'Collected':o.fulfilment_status==='ready'?'Ready for collection':'Order received'):o.completed_at?'Completed':o.tracking_number?'Dispatched':o.royal_mail_reference?'Postage prepared':o.fulfilment_status==='ready'?'Ready':o.fulfilment_status==='processing'?'Processing':'Order received';
       const postageLabel=o.shipping_method==='collection'?'Collection':o.shipping_method==='express'?'Express':'Standard';
       const isNew=!seen.has(o.id)&&o.fulfilment_status!=='fulfilled';
       return <tr key={o.id} className={`modern-row ${isNew?'new-order':''}`} onClick={e=>{if(e.target.closest('input,button,a,label'))return;openOrder(o.id,href)}}>
