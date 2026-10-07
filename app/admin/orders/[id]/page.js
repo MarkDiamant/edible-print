@@ -46,6 +46,17 @@ function eventTime(value){
   try{return new Date(value).toLocaleString('en-GB',{timeZone:'Europe/London',day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}catch{return ''}
 }
 
+async function getEmailDeliveryState(details={}){
+  const id=String(details.resend_id||'').trim();
+  if(!id||!process.env.RESEND_API_KEY)return null;
+  try{
+    const response=await fetch(`https://api.resend.com/emails/${encodeURIComponent(id)}`,{headers:{Authorization:`Bearer ${process.env.RESEND_API_KEY}`},cache:'no-store'});
+    if(!response.ok)return null;
+    const email=await response.json();
+    return {status:String(email.last_event||'').toLowerCase(),sent_at:email.created_at||null};
+  }catch{return null}
+}
+
 async function fetchRemoteOrder(details={}){
   const apiKey=process.env.ROYAL_MAIL_CLICK_DROP_API_KEY;
   const reference=String(details.order_reference||'').trim();
@@ -135,7 +146,21 @@ export default async function OrderDetail({params,searchParams}){
   const postagePrice=defaultPostage==='express'?3.80:2.85;
   const number=order.source_order_name?String(order.source_order_name).replace(/^#/,''):formatOrderNumber(order.order_number);
   let fulfilmentShown=false;
-  const timeline=[...(syncedDeletedEvent?[syncedDeletedEvent]:[]),...(events||[])].filter(e=>e.event_type!=='fulfilment_fulfilled'||(!fulfilmentShown&&(fulfilmentShown=true))).map(e=>({...e,label:eventLabel(e)})).filter(e=>e.label);
+  const timelineEvents=[...(syncedDeletedEvent?[syncedDeletedEvent]:[]),...(events||[])].filter(e=>e.event_type!=='fulfilment_fulfilled'||(!fulfilmentShown&&(fulfilmentShown=true)));
+  const timeline=await Promise.all(timelineEvents.map(async e=>{
+    if(e.event_type!=='email_feedback'||!e.details?.scheduled_at)return {...e,label:eventLabel(e)};
+    const delivery=await getEmailDeliveryState(e.details);
+    const status=delivery?.status;
+    const label=status==='delivered'?'Feedback email was delivered to the customer.'
+      :status==='opened'?'Feedback email was delivered and opened by the customer.'
+      :status==='clicked'?'Feedback email was delivered and clicked by the customer.'
+      :status==='bounced'?'Feedback email bounced.'
+      :status==='complained'?'Feedback email was marked as spam by the customer.'
+      :status==='sent'?'Feedback email was sent to the customer.'
+      :'Feedback email is scheduled for the customer.';
+    return {...e,label,display_time:status&&status!=='scheduled'?(delivery?.sent_at||e.created_at):e.created_at};
+  }));
+  const visibleTimeline=timeline.filter(e=>e.label);
   const rmNotice=query?.rm==='created'?'Royal Mail order created successfully.':query?.rm==='exists'?'This order already exists in Click & Drop.':query?.rm==='deleted'?'Royal Mail order cancelled/deleted successfully.':query?.rm==='delete-failed'?'Royal Mail could not cancel this stored link. If you already deleted the order in Click & Drop, use “Clear from admin” below.':query?.rm==='failed'?'Royal Mail could not accept the order. Check the latest error below and try again.':query?.rm==='config'?'Click & Drop API key is not configured.':query?.rm==='weight'?'This order is over the 750g Large Letter limit and needs manual postage setup.':'';
   const notice=query?.refund==='done'?'Refund completed successfully.':query?.refund==='failed'?'Refund failed — check the timeline/error logs.':query?.refund==='exists'?'This order has already been refunded.':query?.return==='done'?'Return recorded successfully.':query?.return==='exists'?'This order is already marked returned.':'';
   return <main className="admin-shell" style={{maxWidth:1220,margin:'0 auto',padding:'24px 20px 50px'}}>
@@ -190,7 +215,7 @@ export default async function OrderDetail({params,searchParams}){
         </section>}
         <section style={{...card,padding:0,overflow:'hidden'}}>
           <div style={{padding:'18px 20px',borderBottom:'1px solid #eee'}}><h2 style={{margin:0,fontSize:19}}>Timeline</h2></div>
-          <div className="order-timeline" style={{padding:'8px 20px 18px'}}>{timeline.length?timeline.map((e,i)=><div className="order-timeline-row" key={`${e.event_type}-${e.created_at}-${i}`} style={{display:'grid',gridTemplateColumns:'14px 1fr auto',gap:12,alignItems:'start',padding:'13px 0',borderBottom:i===timeline.length-1?'none':'1px solid #f0f0ed'}}><span style={{width:9,height:9,borderRadius:'50%',background:'#777',marginTop:6}}/><div><div>{e.details?.email_html?<a href={`/admin/orders/${id}/email?event=${encodeURIComponent(e.created_at)}`} style={{fontWeight:600,textDecoration:'underline'}}>{e.label}</a>:e.label}</div>{e.event_type==='email_failed'&&e.details?.message&&<small style={{color:'#9b1c1c'}}>{e.details.message}</small>}</div><small style={{color:'#777',whiteSpace:'nowrap'}}>{eventTime(e.created_at)}</small></div>):<p style={{color:'#777'}}>No timeline activity yet.</p>}</div>
+          <div className="order-timeline" style={{padding:'8px 20px 18px'}}>{timeline.length?timeline.map((e,i)=><div className="order-timeline-row" key={`${e.event_type}-${e.created_at}-${i}`} style={{display:'grid',gridTemplateColumns:'14px 1fr auto',gap:12,alignItems:'start',padding:'13px 0',borderBottom:i===timeline.length-1?'none':'1px solid #f0f0ed'}}><span style={{width:9,height:9,borderRadius:'50%',background:'#777',marginTop:6}}/><div><div>{e.details?.email_html?<a href={`/admin/orders/${id}/email?event=${encodeURIComponent(e.created_at)}`} style={{fontWeight:600,textDecoration:'underline'}}>{e.label}</a>:e.label}</div>{e.event_type==='email_failed'&&e.details?.message&&<small style={{color:'#9b1c1c'}}>{e.details.message}</small>}</div><small style={{color:'#777',whiteSpace:'nowrap'}}>{eventTime(e.display_time||e.created_at)}</small></div>):<p style={{color:'#777'}}>No timeline activity yet.</p>}</div>
         </section>
       </div>
       <aside className="order-admin-aside" style={{display:'grid',gap:18}}>
