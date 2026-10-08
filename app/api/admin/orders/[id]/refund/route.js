@@ -16,7 +16,7 @@ export async function POST(req,{params}){
   const form=await req.formData();
   const partial=String(form.get('mode')||'full')==='partial';
   const raw=String(form.get('amount')||'').trim();
-  if(partial&&!/^[0-9]+(\\.[0-9]{1,2})?$/.test(raw))return NextResponse.redirect(new URL('/admin/orders/'+id+'?refund=invalid',req.url),303);
+  if(partial&&!/^[0-9]+(\.[0-9]{1,2})?$/.test(raw))return NextResponse.redirect(new URL('/admin/orders/'+id+'?refund=invalid',req.url),303);
   const requested=Math.round(Number(raw)*100);
   if(partial&&(!Number.isSafeInteger(requested)||requested<=0))return NextResponse.redirect(new URL('/admin/orders/'+id+'?refund=invalid',req.url),303);
   try{
