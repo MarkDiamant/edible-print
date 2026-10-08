@@ -1,3 +1,4 @@
+import Stripe from 'stripe';
 import {cookies} from 'next/headers';
 import RoyalMailAutoOpen from './RoyalMailAutoOpen';
 import {notFound,redirect} from 'next/navigation';
@@ -36,6 +37,7 @@ function eventLabel(event){
   if(t==='royal_mail_order_deleted')return 'Royal Mail order was deleted / cancelled in Click & Drop.';
   if(t==='royal_mail_order_failed')return d.action==='delete'?'Royal Mail cancellation failed.':'Royal Mail order creation failed.';
   if(t==='refund_issued')return `${d.mode==='partial'?'Partial':'Full'} refund issued${d.amount?` — £${(Number(d.amount)/100).toFixed(2)}`:''}.`;
+  if(t==='email_refund')return 'Refund confirmation email sent to the customer.';
   if(t==='refund_failed')return 'Refund attempt failed.';
   if(t==='return_recorded')return 'Order was marked as returned.';
   if(t==='customer_message')return 'Customer left an order note.';
@@ -105,6 +107,20 @@ export default async function OrderDetail({params,searchParams}){
     artwork=[...artwork,...(cartArtwork||[]).filter(a=>!seen.has(a.id))];
   }
   const {data:events}=await db.from('order_events').select('event_type,details,created_at').eq('order_id',id).order('created_at',{ascending:false});
+  let stripeRefunds=null;
+  let stripeRefundError=false;
+  let stripePaymentAmount=0;
+  if(order.stripe_payment_intent_id&&process.env.STRIPE_SECRET_KEY){
+    try{
+      const stripe=new Stripe(process.env.STRIPE_SECRET_KEY);
+      const [payment,refundList]=await Promise.all([
+        stripe.paymentIntents.retrieve(order.stripe_payment_intent_id),
+        stripe.refunds.list({payment_intent:order.stripe_payment_intent_id,limit:100})
+      ]);
+      stripePaymentAmount=Number(payment.amount_received||0);
+      stripeRefunds=refundList.data.map(refund=>({id:refund.id,amount:refund.amount,status:refund.status,created:refund.created})).sort((a,b)=>b.created-a.created);
+    }catch(error){console.error('Could not retrieve Stripe refund status',error);stripeRefundError=true;}
+  }
   const messages=(events||[]).filter(e=>e.event_type==='customer_message');
   const instructionEvents=(events||[]).filter(e=>e.event_type==='artwork_instructions');
   const rmEvents=(events||[]).filter(e=>['royal_mail_order_created','royal_mail_tracking_updated','royal_mail_order_deleted','royal_mail_order_failed'].includes(e.event_type));
@@ -185,6 +201,10 @@ export default async function OrderDetail({params,searchParams}){
           <div style={{marginBottom:14}}><h2 style={{margin:0,fontSize:19}}>{order.fulfilment_status==='fulfilled'?fulfilledLabel:'Fulfilment'}</h2></div>
           {(items||[]).map(item=>{const itemInstructions=instructionMap.get(item.source_draft_item_id)||[];return <div key={item.id} style={{borderTop:'1px solid #ecece8',padding:'16px 0'}}><div style={{display:'flex',justifyContent:'space-between',gap:14}}><div><strong>{item.product_title}</strong><div style={{color:'#666',fontSize:14,marginTop:3}}>{item.variant_label} · <strong style={{color:'#222',fontSize:16}}>Qty {item.quantity}</strong></div></div><strong>£{((item.unit_price_pence*item.quantity)/100).toFixed(2)}</strong></div>{item.source_attributes?.length>0&&<div style={{marginTop:12,paddingTop:12,borderTop:'1px dashed #ddd'}}>{item.source_attributes.map((attr,index)=>{const isImage=/image_upload/i.test(attr.key||'')&&/^https?:\/\//i.test(attr.value||'');return <div key={`${attr.key}-${index}`} style={{fontSize:14,color:'#4e4e4b',marginTop:index?7:0}}><strong>{isImage?`Artwork ${index+1}`:String(attr.key||'').replace(/\d+$/,'')}:</strong> {isImage?<a href={attr.value} target="_blank" rel="noreferrer">Open original artwork ↗</a>:attr.value}</div>})}</div>}{signed.filter(a=>a.order_item_id===item.id||a.draft_item_id===item.source_draft_item_id||(items||[]).length===1).map((a,index)=>{const matched=itemInstructions.find(x=>x.filename===a.original_filename)||itemInstructions[index];return <div className="artwork-file" key={a.id} style={{marginTop:12,paddingTop:12,borderTop:'1px dashed #ddd'}}><p style={{margin:'0 0 6px'}}><strong>Image {index+1}:</strong> <a href={a.url||'#'}>{a.original_filename}</a> <small>({Math.round(a.size_bytes/1024)} KB)</small></p><div style={{fontSize:14,color:'#4e4e4b'}}><strong>Instructions:</strong> {matched?.instruction||'No specific instructions'}</div></div>})}</div>})}
           <p style={{fontSize:13,color:'#777',margin:'8px 0 0'}}>Artwork download links are secure for 5 minutes. Refresh the page for fresh links.</p>
+        </section>
+        <section style={card}>
+          <h2 style={{margin:'0 0 14px',fontSize:19}}>Refunds</h2>
+          {stripeRefunds?<><p style={{margin:'0 0 10px'}}>Refunded: <strong>£{(stripeRefunds.filter(r=>!['failed','canceled'].includes(r.status)).reduce((n,r)=>n+r.amount,0)/100).toFixed(2)}</strong> · Remaining refundable: <strong>£{(Math.max(0,stripePaymentAmount-stripeRefunds.filter(r=>!['failed','canceled'].includes(r.status)).reduce((n,r)=>n+r.amount,0))/100).toFixed(2)}</strong></p>{stripeRefunds.length?stripeRefunds.map(refund=><div key={refund.id} style={{borderTop:'1px solid #eee',padding:'10px 0',display:'flex',justifyContent:'space-between',gap:10,flexWrap:'wrap'}}><span><strong>£{(refund.amount/100).toFixed(2)}</strong> · {new Date(refund.created*1000).toLocaleDateString('en-GB')}</span><span style={{fontWeight:700}}>{refund.status==='succeeded'?'Succeeded':refund.status==='pending'?'Pending':refund.status==='failed'?'Failed':refund.status==='canceled'?'Cancelled':refund.status}</span></div>):<p style={{margin:0}}>No refunds recorded in Stripe.</p>}</>:<p style={{margin:0,color:'#777'}}>{stripeRefundError?'Stripe status temporarily unavailable. Check Stripe Dashboard.':'Stripe refund details unavailable for this order.'}</p>}
         </section>
         <section style={card}>
           <h2 style={{margin:'0 0 14px',fontSize:19}}>Paid</h2>
