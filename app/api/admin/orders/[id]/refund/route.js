@@ -1,4 +1,5 @@
 import Stripe from 'stripe';
+import {sendRefundEmail} from '../../../../../../lib/refundEmail';
 import {NextResponse} from 'next/server';
 import {cookies} from 'next/headers';
 import {isAdminValue} from '../../../../../../lib/adminAuth';
@@ -31,6 +32,7 @@ export async function POST(req,{params}){
     if(amount===remaining)await db.from('orders').update({payment_status:'refunded',status:'refunded'}).eq('id',id);
     else await db.from('orders').update({payment_status:'partially_refunded'}).eq('id',id);
     await db.from('order_events').insert({order_id:id,event_type:'refund_issued',actor:'admin',details:{refund_id:refund.id,amount:refund.amount,currency:refund.currency,status:refund.status,mode:partial?'partial':'full'}});
+    try{await sendRefundEmail(order,refund)}catch(emailError){console.error('Refund notification failed',emailError);await db.from('order_events').insert({order_id:id,event_type:'email_failed',actor:'system',details:{type:'refund',refund_id:refund.id,message:String(emailError?.message||emailError).slice(0,500)}});}
     return NextResponse.redirect(new URL('/admin/orders/'+id+'?refund=done',req.url),303);
   }catch(error){
     console.error('Refund failed',error);
