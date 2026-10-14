@@ -1,1 +1,2 @@
+export const dynamic='force-dynamic';
 import {notFound} from 'next/navigation';import {products} from '../../../lib/products';import ProductClient from './ProductClient';import {getCatalogue} from '../../../lib/catalogue';export function generateStaticParams(){return products.map(p=>({slug:p.slug}))}export default async function ProductPage({params}){const {slug}=await params;const catalogue=await getCatalogue();const p=catalogue.find(x=>x.slug===slug);if(!p)notFound();return <ProductClient p={p} products={catalogue}/>;}
