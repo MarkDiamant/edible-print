@@ -1,3 +1,4 @@
+export const dynamic='force-dynamic';
 import Link from 'next/link';import {money} from '../lib/products';import {getCatalogue} from '../lib/catalogue';import {SiteHeader,SiteFooter} from '../components/SiteChrome';import {getSupabaseAdmin} from '../lib/supabaseAdmin';
 const fallbackHero='https://diiqajrvlalkggjlutyn.supabase.co/storage/v1/object/public/product-images/shopify-migration/ff17c003-fc6a-4148-a9b9-136d2fe960ea.png';
 const fallbackBand='https://diiqajrvlalkggjlutyn.supabase.co/storage/v1/object/public/product-images/shopify-migration/0ebc4be1-3f96-47a3-9d76-0512d48a6b4a.jpg';
