@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import {useEffect,useState} from 'react';
-export const logo='https://cdn.shopify.com/s/files/1/1000/0839/5135/files/Edible_Print_Logo_resdesigned.png?v=1776435305';
+export const logo='https://diiqajrvlalkggjlutyn.supabase.co/storage/v1/object/public/product-images/shopify-migration/5e02d849-40f4-4633-9fd8-7259872503ff.png';
 const dsLogo='https://raw.githubusercontent.com/MarkDiamant/certifire-uk/main/public/diamant-solutions-logo.svg';
 const instagram='https://www.instagram.com/edibleprintuk';
 function BasketIcon(){return <svg viewBox="0 0 24 24" aria-hidden="true" className="basket-svg"><path d="M4 9h16l-1.5 10h-13L4 9Z"/><path d="M8 9l4-5 4 5"/><path d="M8 13v2M12 13v2M16 13v2"/></svg>}
