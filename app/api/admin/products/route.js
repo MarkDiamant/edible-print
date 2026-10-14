@@ -10,7 +10,7 @@ export async function GET(){
  const {data,error}=await getSupabaseAdmin().from('product_catalogue').select('*');
  if(error)return NextResponse.json({error:error.message},{status:500});
  const overrides=new Map((data||[]).map(p=>[p.slug,p]));
- return NextResponse.json({products:[...products.map(p=>({...p,...(overrides.get(p.slug)||{}),published:true,existing:true})),...(data||[]).filter(p=>!products.some(x=>x.slug===p.slug)).map(p=>({...p,existing:false}))]});
+ return NextResponse.json({products:[...products.map(p=>({...p,...(overrides.get(p.slug)||{}),published:overrides.get(p.slug)?.published??true,existing:true})),...(data||[]).filter(p=>!products.some(x=>x.slug===p.slug)).map(p=>({...p,existing:false}))]});
 }
 export async function POST(req){
  if(!await authorized())return NextResponse.json({error:'Unauthorized'},{status:401});
