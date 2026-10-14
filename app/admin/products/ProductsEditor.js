@@ -1,0 +1,35 @@
+'use client';
+import {useEffect,useState} from 'react';
+import Link from 'next/link';
+const empty={slug:'',title:'',extra:'',description_html:'',images:[],variants:[['1 design',699],['Up to 4 designs',1099],['Up to 10 designs',1399],['Different design on every topper',1799]],existing:false};
+export default function ProductsEditor(){
+ const [items,setItems]=useState([]),[selected,setSelected]=useState(null),[busy,setBusy]=useState(false),[uploading,setUploading]=useState(false),[notice,setNotice]=useState(''),[error,setError]=useState('');
+ async function load(){try{const r=await fetch('/api/admin/products',{cache:'no-store'}),d=await r.json();if(!r.ok)throw Error(d.error);setItems(d.products||[])}catch(e){setError(e.message)}}
+ useEffect(()=>{load()},[]);
+ const edit=p=>{setSelected({...p,images:p.images||[p.image].filter(Boolean),variants:(p.variants||[]).map(v=>[...v])});setNotice('');setError('')};
+ const change=(k,v)=>setSelected(p=>({...p,[k]:v}));
+ async function upload(files){setUploading(true);setError('');try{for(const file of files){const form=new FormData();form.append('file',file);const r=await fetch('/api/admin/products/upload',{method:'POST',body:form}),d=await r.json();if(!r.ok)throw Error(d.error);setSelected(p=>({...p,images:[...(p.images||[]),d.url]}))}}catch(e){setError(e.message)}finally{setUploading(false)}}
+ async function save(){setBusy(true);setError('');setNotice('');try{const r=await fetch('/api/admin/products',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(selected)}),d=await r.json();if(!r.ok)throw Error(d.error);setNotice(d.notice);await load()}catch(e){setError(e.message)}finally{setBusy(false)}}
+ const input={width:'100%',padding:'11px 13px',border:'1px solid #d4d6d8',borderRadius:10,font:'inherit',boxSizing:'border-box'};
+ const label={display:'grid',gap:7,fontWeight:600,marginBottom:18};
+ return <main style={{maxWidth:1100,margin:'0 auto',padding:'30px 20px 70px',color:'#202a30'}}>
+ <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,flexWrap:'wrap'}}><div><Link href="/admin">← Back to orders</Link><h1 style={{margin:'10px 0 4px'}}>Products</h1><p style={{color:'#667'}}>Manage photos, product details and new product drafts.</p></div><button onClick={()=>edit(empty)} style={{...input,width:'auto',background:'#153f39',color:'white',cursor:'pointer'}}>+ Add product</button></div>
+ <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(230px,1fr))',gap:15,margin:'24px 0'}}>
+ {items.map(p=><button key={p.slug} onClick={()=>edit(p)} style={{textAlign:'left',background:'white',border:'1px solid #e0e5e2',borderRadius:14,padding:12,cursor:'pointer',font:'inherit'}}><div style={{height:155,background:'#f4f5f4',borderRadius:10,overflow:'hidden'}}>{(p.images?.[0]||p.image)&&<img src={p.images?.[0]||p.image} alt="" style={{width:'100%',height:'100%',objectFit:'contain'}}/>}</div><strong style={{display:'block',marginTop:10}}>{p.title}</strong><small>{p.existing?'Live product':'Draft, not yet purchasable'}</small></button>)}
+ </div>
+ {selected&&<section style={{background:'white',border:'1px solid #dde3df',borderRadius:18,padding:'clamp(16px,3vw,30px)',boxShadow:'0 8px 35px #0000000a'}}>
+ <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}><h2>{selected.existing?'Edit product':'New product draft'}</h2><button onClick={()=>setSelected(null)} style={{border:0,background:'transparent',fontSize:24,cursor:'pointer'}}>×</button></div>
+ <label style={label}>Product title<input style={input} value={selected.title} onChange={e=>change('title',e.target.value)} placeholder="e.g. Pre-cut edible logo circles"/></label>
+ <label style={label}>URL name<input style={input} disabled={selected.existing} value={selected.slug} onChange={e=>change('slug',e.target.value.toLowerCase().replace(/[^a-z0-9-]/g,'-'))} placeholder="my-new-product"/></label>
+ <h3>Product photos</h3><p style={{color:'#667'}}>Upload directly from your phone or computer. Dragging isn't necessary. The first photo is the main product image.</p>
+ <div style={{display:'flex',flexWrap:'wrap',gap:12,marginBottom:14}}>{(selected.images||[]).map((url,i)=><div key={url+i} style={{width:145,border:'1px solid #ddd',borderRadius:10,padding:7}}><img src={url} alt="" style={{width:'100%',height:105,objectFit:'contain'}}/><div style={{display:'flex',justifyContent:'space-between',gap:5}}><button disabled={i===0} onClick={()=>change('images',selected.images.map((x,j)=>j===i-1?url:j===i?selected.images[i-1]:x))}>↑</button><button onClick={()=>change('images',selected.images.filter((_,j)=>j!==i))}>Remove</button></div></div>)}</div>
+ <label style={{...label,border:'2px dashed #a5bbb0',padding:18,borderRadius:12,background:'#f7faf8',cursor:'pointer'}}> {uploading?'Uploading photos…':'＋ Choose photos to upload'}<input type="file" accept="image/png,image/jpeg,image/webp" multiple disabled={uploading} onChange={e=>{upload([...e.target.files]);e.target.value=''}}/></label>
+ <label style={label}>Short product description<textarea style={input} rows={5} value={selected.extra||''} onChange={e=>change('extra',e.target.value)}/></label>
+ <label style={label}>Full description (HTML supported)<textarea style={input} rows={6} value={selected.description_html??selected.descriptionHtml??''} onChange={e=>change('description_html',e.target.value)}/></label>
+ <h3>Price and design options</h3><p style={{color:'#667'}}>{selected.existing?'Current live checkout prices are protected.':'New products can use the same four-option template. They stay as drafts until checkout integration is ready.'}</p>
+ {(selected.variants||[]).map((v,i)=><div key={i} style={{display:'flex',gap:10,marginBottom:10}}><input style={{...input,flex:3}} disabled={selected.existing} value={v[0]} onChange={e=>change('variants',selected.variants.map((x,j)=>j===i?[e.target.value,x[1]]:x))}/><input style={{...input,flex:1}} type="number" min="1" disabled={selected.existing} value={(v[1]/100).toFixed(2)} onChange={e=>change('variants',selected.variants.map((x,j)=>j===i?[x[0],Math.round(Number(e.target.value)*100)]:x))}/></div>)}
+ {error&&<p role="alert" style={{color:'#a42121'}}>{error}</p>}{notice&&<p role="status" style={{color:'#176144'}}>{notice}</p>}
+ <button onClick={save} disabled={busy||uploading} style={{background:'#153f39',color:'white',border:0,borderRadius:12,padding:'14px 24px',fontWeight:700,cursor:'pointer'}}>{busy?'Saving…':selected.existing?'Save changes':'Save draft'}</button>
+ </section>}
+ </main>;
+}
