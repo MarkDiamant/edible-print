@@ -23,8 +23,8 @@ export async function POST(req){
  const variants=Array.isArray(b.variants)?b.variants:[];
  if(!Array.isArray(variants)||!variants.length||variants.length>12||variants.some(v=>!Array.isArray(v)||typeof v[0]!=='string'||!Number.isInteger(v[1])||v[1]<1))return NextResponse.json({error:'At least one valid price option is required.'},{status:400});
  // New products stay in draft until the checkout catalogue also supports their SKU.
- const published=b.published===undefined?Boolean(existing):Boolean(b.published);
+ const published=Boolean(existing)&&(b.published===undefined?true:Boolean(b.published));
  const {error}=await getSupabaseAdmin().from('product_catalogue').upsert({slug,title,extra,description_html,images,variants,published,updated_at:new Date().toISOString()});
- return error?NextResponse.json({error:error.message},{status:500}):NextResponse.json({ok:true,published,notice:published?'Saved and published.':'Saved as draft.'});
+ return error?NextResponse.json({error:error.message},{status:500}):NextResponse.json({ok:true,published,notice:published?'Saved and published.':'Saved as draft or hidden. New product checkout support must be verified before publishing.'});
 }
 export async function DELETE(req){if(!await authorized())return NextResponse.json({error:'Unauthorized'},{status:401});const {slug}=await req.json();if(typeof slug!=='string')return NextResponse.json({error:'Invalid product'},{status:400});const db=getSupabaseAdmin();if(products.some(p=>p.slug===slug)){const p=products.find(p=>p.slug===slug);const {error}=await db.from('product_catalogue').upsert({slug,title:p.title,extra:p.extra,description_html:p.descriptionHtml,images:p.images,variants:p.variants,published:false});return error?NextResponse.json({error:error.message},{status:500}):NextResponse.json({ok:true,notice:'Product hidden from shop.'})}const {error}=await db.from('product_catalogue').delete().eq('slug',slug);return error?NextResponse.json({error:error.message},{status:500}):NextResponse.json({ok:true,notice:'Product deleted.'})}
