@@ -5,10 +5,10 @@ import {money} from '../../../lib/products';
 import {commerce,ensureCart,supabase} from '../../../lib/supabaseClient';
 import {SiteHeader,SiteFooter} from '../../../components/SiteChrome';
 const tutorialVideos={
- 'custom-edible-prints-15-x-5cm-logo-circles-pre-cut':'https://cdn.shopify.com/videos/c/vp/8db2428e06ff448cae0d059c3564deaa/8db2428e06ff448cae0d059c3564deaa.HD-720p-4.5Mbps-83296087.mp4',
- 'custom-edible-prints-30-x-3-8cm-logo-circles-pre-cut':'https://cdn.shopify.com/videos/c/vp/c661c5f40d1c49ff9258cba8955e46c8/c661c5f40d1c49ff9258cba8955e46c8.HD-720p-4.5Mbps-83294507.mp4',
- 'a4-edible-print-sheet':'https://cdn.shopify.com/videos/c/vp/a6a465bcc02b47ab9dfa10fca854cf55/a6a465bcc02b47ab9dfa10fca854cf55.HD-720p-4.5Mbps-83296446.mp4',
- 'pre-cut-edible-logo-squares-50mm-15-per-sheet':'https://cdn.shopify.com/videos/c/vp/562f93bbb2f74cbca0b0fb8d3cb2124b/562f93bbb2f74cbca0b0fb8d3cb2124b.HD-720p-4.5Mbps-83596584.mp4'
+ 'custom-edible-prints-15-x-5cm-logo-circles-pre-cut':'https://res.cloudinary.com/ds3zepqin/video/upload/v1792000655/edible-print/shopify-video-migration/tutorial-50mm-circles.mp4',
+ 'custom-edible-prints-30-x-3-8cm-logo-circles-pre-cut':'https://res.cloudinary.com/ds3zepqin/video/upload/v1792000666/edible-print/shopify-video-migration/tutorial-38mm-circles.mp4',
+ 'a4-edible-print-sheet':'https://res.cloudinary.com/ds3zepqin/video/upload/v1792000672/edible-print/shopify-video-migration/tutorial-a4-sheet.mp4',
+ 'pre-cut-edible-logo-squares-50mm-15-per-sheet':'https://res.cloudinary.com/ds3zepqin/video/upload/v1792000681/edible-print/shopify-video-migration/tutorial-50mm-squares.mp4'
 };
 const maxDesignsFor=(p,index)=>{const label=p.variants[index]?.[0]||'';if(/every|each/i.test(label))return 30;const n=label.match(/(?:up to\s*)?(\d+)\s*(?:different\s*)?design/i);return n?Number(n[1]):[1,4,10,30][index]||1};
 export default function ProductClient({p,products}){
