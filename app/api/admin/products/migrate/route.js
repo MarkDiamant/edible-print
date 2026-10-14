@@ -5,6 +5,8 @@ import {getSupabaseAdmin} from '../../../../../lib/supabaseAdmin';
 import {products} from '../../../../../lib/products';
 export const maxDuration=300;
 const site={
+ logo:'https://cdn.shopify.com/s/files/1/1000/0839/5135/files/Edible_Print_Logo_resdesigned.png?v=1776435305',
+ favicon:'https://cdn.shopify.com/s/files/1/1000/0839/5135/files/ChatGPT_Image_Apr_19_2026_10_11_29_PM.png?v=1776633169',
  hero:'https://cdn.shopify.com/s/files/1/1000/0839/5135/files/cake-with-large-edible-print-on-top-and-small-stickers-on-sides-with-biscuits-and-cupcakes-in-foreground.png?v=1776431154',
  band:'https://cdn.shopify.com/s/files/1/1000/0839/5135/files/Untitled-2_a9647913-81ec-4672-91f5-2944a8986e4a.jpg'
 };
