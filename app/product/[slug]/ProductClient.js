@@ -4,7 +4,7 @@ import Link from 'next/link';
 import {money} from '../../../lib/products';
 import {commerce,ensureCart,supabase} from '../../../lib/supabaseClient';
 import {SiteHeader,SiteFooter} from '../../../components/SiteChrome';
-const formatDescription=(value)=>{const raw=String(value||'');if(/<\\/?[a-z][\\s\\S]*?>/i.test(raw))return raw;const escape=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');const headings=/^(Why choose .+\\?|How it works|\\*?File requirements|Edible icing sheet Ingredients|Storage)$/i;return raw.split(/\\n\\s*\\n|\\r?\\n/).map(line=>line.trim()).filter(Boolean).map(line=>headings.test(line)?'<h3>'+escape(line.replace(/^\\*/,''))+'</h3>':'<p>'+escape(line)+'</p>').join('');};
+const formatDescription=(value)=>{const raw=String(value||'');if(/<\/?[a-z][\s\S]*?>/i.test(raw))return raw;const escape=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');const headings=/^(Why choose .+\?|How it works|\*?File requirements|Edible icing sheet Ingredients|Storage)$/i;return raw.split(/\r?\n/).map(line=>line.trim()).filter(Boolean).map(line=>headings.test(line)?'<h3>'+escape(line.replace(/^\*/,''))+'</h3>':'<p>'+escape(line)+'</p>').join('');};
 const tutorialVideos={
  'custom-edible-prints-15-x-5cm-logo-circles-pre-cut':'https://res.cloudinary.com/ds3zepqin/video/upload/v1792000655/edible-print/shopify-video-migration/tutorial-50mm-circles.mp4',
  'custom-edible-prints-30-x-3-8cm-logo-circles-pre-cut':'https://res.cloudinary.com/ds3zepqin/video/upload/v1792000666/edible-print/shopify-video-migration/tutorial-38mm-circles.mp4',
