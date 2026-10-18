@@ -74,3 +74,12 @@
 /* Keep the selected listing thumbnail level with its title. */
 .cartrow>.cart-listing-image{align-self:start;margin-top:2px}
 @media(max-width:700px){.cartrow>.cart-listing-image{align-self:start;margin-top:2px}}
+
+/* Make uploaded artwork clearly visible and tappable on mobile. */
+.cart-artwork-preview-link{display:inline-flex;flex-direction:column;align-items:center;gap:5px;max-width:100%;color:var(--green-ink);font-size:12px;text-decoration:underline}
+.cart-artwork-preview-link img{display:block;width:120px;height:120px;max-width:100%;object-fit:contain;background:#fff;border:1px solid var(--line);border-radius:8px}
+@media(max-width:700px){
+ .cartrow .cart-artwork-thumbs{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}
+ .cartrow .cart-artwork-preview-link img{width:150px;height:150px;max-width:100%;object-fit:contain}
+ .cartrow .cart-artwork-preview-link{align-items:flex-start;max-width:100%}
+}
