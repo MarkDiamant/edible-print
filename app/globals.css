@@ -26,3 +26,6 @@
 .producthero-frame{aspect-ratio:1/1}
 .producthero-frame .producthero{object-fit:contain}
 .thumbs img,.cartrow img{object-fit:contain;background:#fff}
+
+/* Delivery options are self-explanatory; hide obsolete instructions. */
+.summary .dispatch-choice-note{display:none!important}
