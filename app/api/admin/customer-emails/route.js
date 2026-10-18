@@ -16,7 +16,7 @@ export async function GET(request){
  try{
   const response=await fetch(endpoint,{headers:{Authorization:'Bearer '+key},cache:'no-store'});
   const data=await response.json();
-  if(!response.ok)return NextResponse.json({error:'Unable to retrieve email history from the mail provider'},{status:502});
+  if(!response.ok)return NextResponse.json({error:response.status===401||response.status===403?'The email service key does not have permission to read sent messages. Please check its Resend permissions.':'Email history is unavailable (provider status '+response.status+').'},{status:502});
   return NextResponse.json(data,{headers:{'Cache-Control':'private, no-store'}});
  }catch{return NextResponse.json({error:'Email provider temporarily unavailable'},{status:502})}
 }
