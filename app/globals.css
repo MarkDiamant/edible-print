@@ -70,3 +70,7 @@
 .email-history-detail{position:relative}
 .email-history-detail pre{max-width:100%;overflow-wrap:anywhere;word-break:break-word;line-height:1.65;background:#f8f9f7;padding:18px;border-radius:10px}
 @media(max-width:640px){.email-history-item{padding:13px}.email-history-heading{align-items:flex-start}}
+
+/* Keep the selected listing thumbnail level with its title. */
+.cartrow>.cart-listing-image{align-self:start;margin-top:2px}
+@media(max-width:700px){.cartrow>.cart-listing-image{align-self:start;margin-top:2px}}
