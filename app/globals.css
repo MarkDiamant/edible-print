@@ -53,3 +53,20 @@
  .delivery{grid-template-columns:20px minmax(0,1fr) auto;gap:10px}
  .delivery span{min-width:0;overflow-wrap:anywhere}
 }
+
+/* Customer email archive */
+.email-history{max-width:1120px}
+.email-history-panel,.email-history-detail{border-radius:14px;box-shadow:0 8px 30px rgba(34,44,34,.04)}
+.email-history-heading{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:18px}
+.email-history-heading h2{margin:0}
+.email-history-heading p{margin:6px 0;color:var(--muted);font-size:14px}
+.email-history-count{background:var(--sage-pale);border-radius:999px;padding:8px 13px;font-size:13px;font-weight:600}
+.email-history input[type=search]{max-width:600px;border:1px solid var(--line);border-radius:10px!important;background:#fff}
+.email-history-item{display:grid;gap:5px;width:100%;padding:16px 18px;text-align:left;margin-bottom:10px;border:1px solid var(--line);background:#fff;border-radius:12px;overflow-wrap:anywhere;cursor:pointer;transition:border-color .15s,background .15s}
+.email-history-item:hover,.email-history-item:focus-visible{background:#f7f9f5;border-color:var(--sage)}
+.email-history-item strong{font-size:15px;color:var(--ink)}
+.email-history-item div{font-size:14px;color:#485348}
+.email-history-item small{font-size:12px;color:var(--muted)}
+.email-history-detail{position:relative}
+.email-history-detail pre{max-width:100%;overflow-wrap:anywhere;word-break:break-word;line-height:1.65;background:#f8f9f7;padding:18px;border-radius:10px}
+@media(max-width:640px){.email-history-item{padding:13px}.email-history-heading{align-items:flex-start}}
