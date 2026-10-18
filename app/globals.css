@@ -83,3 +83,10 @@
  .cartrow .cart-artwork-preview-link img{width:150px;height:150px;max-width:100%;object-fit:contain}
  .cartrow .cart-artwork-preview-link{align-items:flex-start;max-width:100%}
 }
+
+/* Comfortable spacing throughout admin panels, including email history. */
+.admin-panel:not(:has(.admin-table-wrap)){padding:20px 24px}
+.admin-panel:not(:has(.admin-table-wrap))>.admin-panel-head{margin:-20px -24px 20px;padding:20px 24px}
+.admin-panel .email-history-item{padding:18px 20px}
+.admin-panel .email-history-detail{padding:24px}
+@media(max-width:700px){.admin-panel:not(:has(.admin-table-wrap)){padding:18px 16px}.admin-panel:not(:has(.admin-table-wrap))>.admin-panel-head{margin:-18px -16px 18px;padding:16px}.admin-top{gap:14px;flex-wrap:wrap}.admin-panel .email-history-item{padding:16px}}
