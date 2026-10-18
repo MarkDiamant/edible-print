@@ -29,3 +29,27 @@
 
 /* Delivery options are self-explanatory; hide obsolete instructions. */
 .summary .dispatch-choice-note{display:none!important}
+
+/* Basket cards: prevent narrow columns and keep uploaded artwork visible. */
+.cartrow>div{min-width:0}
+.cartrow>div>strong{display:block;overflow-wrap:anywhere}
+.cartrow .cart-artwork{min-width:0;overflow-wrap:anywhere}
+.cartrow .cart-artwork-thumbs{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.cartrow .cart-artwork-thumbs img{width:86px;height:86px;object-fit:contain;border:1px solid var(--line);border-radius:8px;background:#fff}
+.cart-instructions{display:block!important;line-height:1.6;overflow-wrap:anywhere}
+.cart-instruction-lines{display:grid;gap:3px;margin-top:6px}
+@media(max-width:700px){
+ .cart{padding:0 16px;margin:30px auto}
+ .cartrow{grid-template-columns:76px minmax(0,1fr);align-items:start;gap:12px;padding:20px 0}
+ .cartrow>img{width:76px;height:76px;grid-column:1;grid-row:1}
+ .cartrow>div{grid-column:2;grid-row:1;min-width:0}
+ .cartrow>div>strong{font-size:16px;line-height:1.4}
+ .cartrow>strong{grid-column:2;grid-row:2;justify-self:start}
+ .cartrow>button{grid-column:2;grid-row:3;justify-self:start;padding:0}
+ .cartrow .cart-artwork{padding:10px;margin:12px 0;background:#f7f8f4;border-radius:8px}
+ .cartrow .cart-artwork-thumbs img{width:100px;height:100px}
+ .cartrow label{flex-wrap:wrap}
+ .summary{max-width:none;margin:25px 0;padding:16px}
+ .delivery{grid-template-columns:20px minmax(0,1fr) auto;gap:10px}
+ .delivery span{min-width:0;overflow-wrap:anywhere}
+}
