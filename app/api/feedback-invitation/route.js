@@ -4,7 +4,8 @@ import {formatOrderNumber} from '../../../lib/orderNumber';
 export const dynamic='force-dynamic';
 export async function GET(request){
  const token=new URL(request.url).searchParams.get('token')||'';
- const headers={'Access-Control-Allow-Origin':'https://www.woulduseagain.com','Cache-Control':'no-store'};
+ const origin=request.headers.get('origin');
+ const headers={'Access-Control-Allow-Origin':['https://www.woulduseagain.com','https://woulduseagain.com'].includes(origin)?origin:'https://www.woulduseagain.com','Vary':'Origin','Cache-Control':'no-store'};
  if(!/^[0-9a-f-]{36}[0-9a-f]{32}$/i.test(token))return NextResponse.json({error:'Invalid invitation'},{status:400,headers});
  const db=getSupabaseAdmin();
  const {data:events,error}=await db.from('order_events').select('order_id,details').eq('event_type','feedback_prefill_token').contains('details',{token}).limit(1);
