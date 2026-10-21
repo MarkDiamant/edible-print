@@ -95,3 +95,14 @@
 .product-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
 .product-grid>.product-card{min-width:0;max-width:100%}
 .product-grid .product-card img{display:block;width:100%;max-width:100%;height:auto;aspect-ratio:1/1;object-fit:contain}
+
+/* Mobile shop: two readable columns, with no overlapping product names or sheet counts. */
+@media(max-width:800px){
+ .collection .product-grid,.shop-section .product-grid,.recommendations .product-grid{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:16px;row-gap:30px}
+ .product-grid>.product-card{min-width:0;overflow-wrap:break-word}
+ .product-grid .product-card h3{font-size:14px;line-height:1.4;margin:10px 2px 6px}
+ .product-grid .product-card .sheet-count{white-space:normal;display:block;font-size:13px;line-height:1.4;margin-top:3px}
+ .product-grid .product-card p{font-size:14px;line-height:1.4}
+ .collection{padding:28px 16px 60px}
+ .collection-title{margin-bottom:24px}
+}
