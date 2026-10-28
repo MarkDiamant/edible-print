@@ -8,6 +8,7 @@ const formatDescription=(value)=>{const raw=String(value||'');if(/<\/?[a-z][\s\S
 const tutorialVideos={
  'custom-edible-prints-15-x-5cm-logo-circles-pre-cut':'https://res.cloudinary.com/ds3zepqin/video/upload/v1792000655/edible-print/shopify-video-migration/tutorial-50mm-circles.mp4',
  'custom-edible-prints-30-x-3-8cm-logo-circles-pre-cut':'https://res.cloudinary.com/ds3zepqin/video/upload/v1792000666/edible-print/shopify-video-migration/tutorial-38mm-circles.mp4',
+ 'custom-edible-prints-24-x-3-8cm-logo-circles-pre-cut':'https://res.cloudinary.com/ds3zepqin/video/upload/v1792000666/edible-print/shopify-video-migration/tutorial-38mm-circles.mp4',
  'a4-edible-print-sheet':'https://res.cloudinary.com/ds3zepqin/video/upload/v1792000672/edible-print/shopify-video-migration/tutorial-a4-sheet.mp4',
  'pre-cut-edible-logo-squares-50mm-15-per-sheet':'https://res.cloudinary.com/ds3zepqin/video/upload/v1792000681/edible-print/shopify-video-migration/tutorial-50mm-squares.mp4'
 };
