@@ -10,7 +10,7 @@ export async function GET(){
  const {data,error}=await getSupabaseAdmin().from('product_catalogue').select('*');
  if(error)return NextResponse.json({error:error.message},{status:500});
  const overrides=new Map((data||[]).map(p=>[p.slug,p]));
- return NextResponse.json({products:[...products.map(p=>({...p,...(overrides.get(p.slug)||{}),published:overrides.get(p.slug)?.published??true,existing:true})),...(data||[]).filter(p=>!products.some(x=>x.slug===p.slug)).map(p=>({...p,existing:false}))]});
+ return NextResponse.json({products:[...products.map(p=>({...p,...(overrides.get(p.slug)||{}),published:overrides.get(p.slug)?.published??true,existing:true})),...(data||[]).filter(p=>!products.some(x=>x.slug===p.slug)).map(p=>({...p,existing:false}))].sort((a,b)=>(Number.isInteger(a.sort_order)?a.sort_order:1000+Math.max(0,products.findIndex(p=>p.slug===a.slug)))-(Number.isInteger(b.sort_order)?b.sort_order:1000+Math.max(0,products.findIndex(p=>p.slug===b.slug))))});
 }
 export async function POST(req){
  if(!await authorized())return NextResponse.json({error:'Unauthorized'},{status:401});
@@ -29,3 +29,18 @@ export async function POST(req){
  return error?NextResponse.json({error:error.message},{status:500}):NextResponse.json({ok:true,published,notice:published?'Saved and published.':'Saved as draft or hidden.'});
 }
 export async function DELETE(req){if(!await authorized())return NextResponse.json({error:'Unauthorized'},{status:401});const {slug}=await req.json();if(typeof slug!=='string')return NextResponse.json({error:'Invalid product'},{status:400});const db=getSupabaseAdmin();if(products.some(p=>p.slug===slug)){const p=products.find(p=>p.slug===slug);const {error}=await db.from('product_catalogue').upsert({slug,title:p.title,extra:p.extra,description_html:p.descriptionHtml,images:p.images,variants:p.variants,published:false});return error?NextResponse.json({error:error.message},{status:500}):NextResponse.json({ok:true,notice:'Product hidden from shop.'})}const {error}=await db.from('product_catalogue').delete().eq('slug',slug);return error?NextResponse.json({error:error.message},{status:500}):NextResponse.json({ok:true,notice:'Product deleted.'})}
+
+export async function PATCH(req){
+ if(!await authorized())return NextResponse.json({error:'Unauthorized'},{status:401});
+ const {slugs}=await req.json();
+ if(!Array.isArray(slugs)||slugs.length>200||new Set(slugs).size!==slugs.length||slugs.some(s=>typeof s!=='string'||!/^[a-z0-9-]+$/.test(s)))return NextResponse.json({error:'Invalid order'},{status:400});
+ const db=getSupabaseAdmin();
+ const {data,error}=await db.from('product_catalogue').select('*');
+ if(error)return NextResponse.json({error:error.message},{status:500});
+ const all=new Map(products.map(p=>[p.slug,{slug:p.slug,title:p.title,extra:p.extra,description_html:p.descriptionHtml||'',images:p.images||[p.image].filter(Boolean),variants:p.variants,published:true}]));
+ for(const p of data||[])all.set(p.slug,p);
+ if(slugs.length!==all.size||slugs.some(s=>!all.has(s)))return NextResponse.json({error:'Refresh the product list and try again'},{status:409});
+ const rows=slugs.map((slug,i)=>({...all.get(slug),sort_order:i,updated_at:new Date().toISOString()}));
+ const {error:saveError}=await db.from('product_catalogue').upsert(rows,{onConflict:'slug'});
+ return saveError?NextResponse.json({error:saveError.message},{status:500}):NextResponse.json({ok:true});
+}
