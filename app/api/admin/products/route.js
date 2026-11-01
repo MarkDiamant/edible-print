@@ -22,6 +22,7 @@ export async function POST(req){
  const images=Array.isArray(b.images)?b.images.filter(u=>typeof u==='string'&&u.startsWith('https://')&&u.length<1000).slice(0,12):[];
  const variants=Array.isArray(b.variants)?b.variants:[];
  if(!Array.isArray(variants)||!variants.length||variants.length>12||variants.some(v=>!Array.isArray(v)||typeof v[0]!=='string'||!Number.isInteger(v[1])||v[1]<1||v[1]>1000000))return NextResponse.json({error:'At least one valid price option is required.'},{status:400});
+ if(slug.startsWith('ready-made-')&&(variants.length!==4||variants.some((v,i)=>v[0]!==['34mm (30 toppers)','38mm (24 toppers)','50mm (15 toppers)','8-inch (1 self-cut circle)'][i])))return NextResponse.json({error:'Ready-made products must have exactly four size options.'},{status:400});
  // New products stay in draft until the checkout catalogue also supports their SKU.
  const published=b.published===undefined?Boolean(existing):Boolean(b.published);
  if(published&&!images.length)return NextResponse.json({error:'Upload at least one product photo before publishing.'},{status:400});
