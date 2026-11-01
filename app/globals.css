@@ -106,3 +106,8 @@
  .collection{padding:28px 16px 60px}
  .collection-title{margin-bottom:24px}
 }
+
+/* Consistent square product photography without cropping source artwork */
+.product-grid .product-card img{width:100%;height:auto;aspect-ratio:1/1;object-fit:contain;background:#fff}
+.producthero-frame{aspect-ratio:1/1}
+.producthero-frame .producthero{width:100%;height:100%;object-fit:contain}
