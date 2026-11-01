@@ -13,7 +13,7 @@ const tutorialVideos={
  'pre-cut-edible-logo-squares-50mm-15-per-sheet':'https://res.cloudinary.com/ds3zepqin/video/upload/v1792000681/edible-print/shopify-video-migration/tutorial-50mm-squares.mp4'
 };
 const isReadyMade=(slug)=>slug.startsWith('ready-made-');
-const readyDesigns=(slug)=>({'ready-made-birthday-edible-toppers':4,'ready-made-baby-shower-edible-toppers':3,'ready-made-mazal-tov-edible-toppers':2,'ready-made-thank-you-edible-toppers':2,'ready-made-congratulations-edible-toppers':2})[slug]||0;
+const readyDesigns=(slug)=>({'ready-made-birthday-edible-toppers':4,'ready-made-christmas-edible-toppers':4,'ready-made-baby-shower-edible-toppers':3,'ready-made-mazal-tov-edible-toppers':2,'ready-made-thank-you-edible-toppers':2,'ready-made-congratulations-edible-toppers':2})[slug]||0;
 const readyDesignLabels=(slug)=>Array.from({length:readyDesigns(slug)},(_,i)=>`Design ${i+1}`);
 const maxDesignsFor=(p,index)=>{const label=p.variants[index]?.[0]||'';if(/every|each/i.test(label))return 30;const n=label.match(/(?:up to\s*)?(\d+)\s*(?:different\s*)?(?:design|upload)/i);return n?Number(n[1]):[1,4,10,30][index]||1};
 export default function ProductClient({p,products}){
