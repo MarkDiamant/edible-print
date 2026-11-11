@@ -111,3 +111,29 @@
 .product-grid .product-card img{width:100%;height:auto;aspect-ratio:1/1;object-fit:contain;background:#fff}
 .producthero-frame{aspect-ratio:1/1}
 .producthero-frame .producthero{width:100%;height:100%;object-fit:contain}
+
+
+/* Basket: reserve a flexible product-details column even when no listing image exists. */
+.cart .cartrow{grid-template-columns:minmax(0,1fr) max-content max-content;gap:20px;align-items:start}
+.cart .cartrow:has(> .cart-listing-image){grid-template-columns:90px minmax(0,1fr) max-content max-content}
+.cart .cartrow>div{min-width:0}
+.cart .cartrow>div>strong{display:block;font-size:17px;line-height:1.4;overflow-wrap:break-word}
+.cart .cartrow>div>p{margin:8px 0}
+.cart .cartrow>.cart-listing-image{width:90px;height:90px;object-fit:contain}
+.cart .cartrow>.cart-artwork{min-width:0}
+.cart .cartrow .cart-artwork{width:100%;max-width:100%;overflow-wrap:break-word;word-break:normal}
+.cart .cartrow .cart-artwork-thumbs{min-width:0}
+.cart .cartrow .cart-artwork-preview-link{max-width:100%}
+.cart .cartrow .cart-artwork-preview-link img{width:100px;height:100px;max-width:100%}
+.cart .cartrow>strong{white-space:nowrap;align-self:start}
+.cart .cartrow>button{white-space:nowrap;align-self:start;padding:2px 0}
+@media(max-width:700px){
+ .cart .cartrow,.cart .cartrow:has(> .cart-listing-image){grid-template-columns:minmax(0,1fr) auto;gap:12px}
+ .cart .cartrow:has(> .cart-listing-image){grid-template-columns:70px minmax(0,1fr)}
+ .cart .cartrow>.cart-listing-image{width:70px;height:70px;grid-column:1;grid-row:1}
+ .cart .cartrow>div{grid-column:1/-1;grid-row:auto}
+ .cart .cartrow:has(> .cart-listing-image)>div{grid-column:2}
+ .cart .cartrow>strong{grid-column:1;grid-row:auto}
+ .cart .cartrow>button{grid-column:2;grid-row:auto;justify-self:end}
+ .cart .cartrow .cart-artwork-preview-link img{width:100px;height:100px}
+}
