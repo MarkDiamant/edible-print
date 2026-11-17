@@ -7,6 +7,14 @@ import {formatOrderNumber} from '../../../../../../lib/orderNumber';
 const CLICK_DROP_ORDERS='https://api.parcel.royalmail.com/api/v1/Orders';
 
 function clean(v){return String(v||'').trim()}
+function destinationCountry(address){
+  const postcode=clean(address?.postal_code).toUpperCase().replace(/\s+/g,'');
+  const country=clean(address?.country).toUpperCase();
+  if(/^GY\d/.test(postcode))return 'GG';
+  if(/^JE\d/.test(postcode))return 'JE';
+  if(/^IM\d/.test(postcode))return 'IM';
+  return country||'GB';
+}
 function serviceCode(choice){
   return choice==='express'?(clean(process.env.ROYAL_MAIL_EXPRESS_SERVICE_CODE)||'TOLP24'):(clean(process.env.ROYAL_MAIL_STANDARD_SERVICE_CODE)||'TOLP48');
 }
@@ -75,13 +83,17 @@ export async function POST(req,{params}){
   const createdEvents=(rmStateEvents||[]).filter(e=>e.event_type==='royal_mail_order_created');
   const latestState=rmStateEvents?.[0]||null;
 
-  // Prevent only a true rapid double-submit. Historical/deleted Click & Drop records must not
-  // block a replacement order because Royal Mail may continue surfacing them for a short time.
+  // A previously created order must be explicitly deleted before replacement.
+  // Never rely on a short timeout: it can create duplicate paid postage.
   if(latestState?.event_type==='royal_mail_order_created'){
-    const ageMs=Date.now()-new Date(latestState.created_at).getTime();
-    if(Number.isFinite(ageMs)&&ageMs>=0&&ageMs<15000){
-      return NextResponse.redirect(new URL(`/admin/orders/${id}?rm=exists`,req.url),303);
-    }
+    return NextResponse.redirect(new URL(`/admin/orders/${id}?rm=exists`,req.url),303);
+  }
+  // An ambiguous earlier API failure may still have created an order in Click & Drop.
+  // Require reconciliation before another create request for the same reference.
+  const {data:previousFailures}=await db.from('order_events').select('details')
+    .eq('order_id',id).eq('event_type','royal_mail_order_failed').limit(100);
+  if((previousFailures||[]).some(e=>/could not be verified/i.test(clean(e.details?.message)))){
+    return NextResponse.redirect(new URL(`/admin/orders/${id}?rm=exists`,req.url),303);
   }
 
   const {data:items,error:itemError}=await db.from('order_items').select('quantity').eq('order_id',id);
@@ -113,7 +125,7 @@ export async function POST(req,{params}){
         city:clean(a.city),
         county:clean(a.state),
         postcode:clean(a.postal_code).toUpperCase(),
-        countryCode:clean(a.country)||'GB'
+        countryCode:destinationCountry(a)
       },
       phoneNumber:clean(order.phone),
       emailAddress:clean(order.email)
@@ -135,11 +147,14 @@ export async function POST(req,{params}){
     const raw=await response.text();
     let result={};try{result=raw?JSON.parse(raw):{}}catch{result={raw}}
     console.log('Click & Drop create response',{status:response.status,orderRef,body:raw.slice(0,1500)});
-    let created=normaliseCreated(result,orderRef);
+    const failedOrders=Array.isArray(result?.failedOrders)?result.failedOrders:[];
+    const reportedErrors=failedOrders.flatMap(x=>x?.errors||[]);
+    const explicitFailure=Number(result?.errorsCount||0)>0||failedOrders.length>0||reportedErrors.length>0;
+    let created=explicitFailure?null:normaliseCreated(result,orderRef);
 
     // Click & Drop sometimes returns HTTP 200 without the older createdOrders envelope.
     // A 200 is not an error by itself: verify the fresh unique reference before failing.
-    if(response.ok&&!created)created=await fetchByReference(apiKey,orderRef);
+    if(response.ok&&!created&&!explicitFailure)created=await fetchByReference(apiKey,orderRef);
 
     // Click & Drop can accept an import (HTTP 200) before its GET endpoint can
     // return the new order. Do not turn a successful import into a false failure.
@@ -148,8 +163,8 @@ export async function POST(req,{params}){
     const accepted=response.ok&&createWasAccepted(result,orderRef);
     if(response.ok&&!created&&accepted)created={orderReference:orderRef};
 
-    if(!response.ok||!created||Number(result?.errorsCount||0)>0){
-      const message=result?.failedOrders?.[0]?.errors?.[0]?.message||result?.errors?.[0]?.message||result?.message||`Royal Mail returned ${response.status} but the new order could not be verified`;
+    if(!response.ok||!created||explicitFailure){
+      const message=result?.failedOrders?.[0]?.errors?.[0]?.errorMessage||result?.failedOrders?.[0]?.errors?.[0]?.message||result?.errors?.[0]?.errorMessage||result?.errors?.[0]?.message||result?.message||`Royal Mail returned ${response.status} but the new order could not be verified`;
       console.error('Click & Drop order export failed',response.status,message);
       await db.from('order_events').insert({order_id:id,event_type:'royal_mail_order_failed',actor:'admin',details:{message:String(message).slice(0,500),sheet_count:sheetCount,weight_grams:weightInGrams,shipping_method:order.shipping_method,postage_choice:postageChoice,service_code:code,order_reference:orderRef}});
       return NextResponse.redirect(new URL(`/admin/orders/${id}?rm=failed`,req.url),303);
