@@ -1,3 +1,5 @@
+import {loadBasket} from '../../../lib/orderPersistence';
+import {getSupabaseAdmin} from '../../../lib/supabaseAdmin';
 import Stripe from 'stripe';
 import {NextResponse} from 'next/server';
 
@@ -13,6 +15,7 @@ export async function POST(req){
     const snapshot=await snapshotRes.json();
     if(!snapshotRes.ok)return NextResponse.json({error:snapshot.error||'Basket could not be verified'},{status:snapshotRes.status});
 
+await loadBasket(getSupabaseAdmin(),cartId);
     const stripe=new Stripe(process.env.STRIPE_SECRET_KEY);
     const origin=process.env.NEXT_PUBLIC_SITE_URL||new URL(req.url).origin;
     const lineItems=snapshot.items.map(item=>({
